@@ -708,8 +708,8 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
      * 3. the list on shuffle (an account that may only shuffle);
      * then the user is told.
      */
-    private fun onRefused(late: Boolean = false, kind: String? = null) {
-        probeDrm()
+    private fun onRefused(late: Boolean = false, kind: String? = null, adChecked: Boolean = false) {
+        if (!adChecked) probeDrm()
         val now = System.currentTimeMillis()
         // A command acknowledged and never delivered: the page's media element stood still for 10 s
         // while its state may well say "playing". Not a refusal if the user paused, an ad is on or
@@ -732,6 +732,20 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         if (!lastPlayRefusable) { bridge.logger?.invoke("play refused by Spotify: not the user's, left alone"); return }
         // The step's own transfer refused: the step is judged by the play that follows it.
         if (refusalTransferring) return
+        // An ad on, or starting: Spotify refuses every play during a break ("ad_disallow"), and the
+        // refusal often lands a moment before the ad's own state. The steps below would then play
+        // the list's first song or turn shuffle on in place of the song picked. The pick is held
+        // instead and played once the ad is over ([onState]).
+        if (refusalStep == 0 && !adChecked) {
+            val pick = Pick(last.first, last.second, last.third, lastOrder?.takeIf { it.first == last.first }?.second, index = lastIndex)
+            if (_adPlaying.value) { holdPickForAd(pick); return }
+            scope.launch {
+                val adCame = withTimeoutOrNull(AD_REFUSAL_WAIT_MS) { _adPlaying.first { it } } != null
+                if (adCame) holdPickForAd(pick)
+                else onRefused(late, kind = null, adChecked = true)
+            }
+            return
+        }
         val ctx = last.first
         var step = ++refusalStep
         if (step == 1 && last.second == null) step = ++refusalStep
@@ -779,6 +793,12 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
             }
             else -> _refused.tryEmit(Unit)
         }
+    }
+
+    private fun holdPickForAd(pick: Pick) {
+        if (!AdRecoveryRules.keepsPickBeforeAd(mirroring)) return
+        pickBeforeAd = pick
+        bridge.logger?.invoke("play refused during an ad: ${pick.track ?: pick.context} held until the ad is over")
     }
 
     private fun refusedEverything() {
@@ -1981,6 +2001,8 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         const val PLAY_TIMEOUT_MS = 10_000L
         /** A refusal that long after a play belongs to it. */
         const val REFUSED_WINDOW_MS = 5_000L
+        /** After a refused pick, how long an ad may take to show up and explain it. */
+        const val AD_REFUSAL_WAIT_MS = 1_200L
         /** A play that leaves the page's repeat mode other than the user's: set again if it shows within this long. */
         const val REPEAT_RESTORE_MS = 20_000L
         /** An acknowledged command that never played is told 10 s after it was sent. */

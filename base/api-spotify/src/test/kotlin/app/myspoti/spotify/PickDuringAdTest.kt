@@ -129,4 +129,21 @@ class PickDuringAdTest {
         val fallback = plays()[1]
         assertTrue("spotify:track:Q" in fallback && "trackUri" !in fallback, "the list from its start, same order: $fallback")
     }
+
+    // Reported: a song picked as an ad began played another song of the list instead (the refusal
+    // arrived before the ad's state, and the fallback played the list from its start).
+    @Test fun `a pick refused just before an ad shows is played after the ad, not the list's start`() = runBlocking {
+        host.post("""{"type":"ready"}""")
+        host.post(state(track("A"), track("B")))
+        waitFor("state") { player.state.value != null }
+        player.play("spotify:playlist:C", trackUri = "spotify:track:P")
+        host.post("""{"type":"refused"}""")
+        delay(200)
+        host.post(state(ad))
+        delay(1_500)
+        assertEquals(1, plays().size, "no fallback play during the ad: ${plays()}")
+        host.post(state(track("B")))
+        waitFor("pick played after the ad", ms = 4_000) { plays().size == 2 }
+        assertTrue("spotify:track:P" in plays()[1], "the song picked: ${plays()[1]}")
+    }
 }
