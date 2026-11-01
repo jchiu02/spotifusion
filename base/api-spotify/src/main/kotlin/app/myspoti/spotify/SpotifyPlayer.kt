@@ -567,7 +567,7 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
                 // is taken as playing from the start, so it is got past instead of waited on.
                 val videoAd = ad?.item?.mediaType == "video"
                 // A song the user picked is waiting on this ad: got past at once, not after it played a while.
-                val pickWaiting = pickBeforeAd != null && now - adSince > AD_PICK_ESCAPE_MS
+                val pickWaiting = pickBeforeAd != null && now - adSince >= AD_PICK_ESCAPE_MS
                 val playing = ad != null && !refused && (videoAd || pickWaiting || now - adSince > AD_PLAYING_SKIP_MS) && !adReloaded
                 val stuck = refused || playing || now - adSince > AD_BREAK_MAX_MS
                 // Measured on 20/10 (desktop, free account, a real ad with its audio refused): the
@@ -2008,8 +2008,8 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         const val REFUSED_WINDOW_MS = 5_000L
         /** After a refused pick, how long an ad may take to show up and explain it. */
         const val AD_REFUSAL_WAIT_MS = 1_200L
-        /** An ad in the way of a song the user picked: got past after that long (the ad's state settles). */
-        const val AD_PICK_ESCAPE_MS = 300L
+        /** An ad in the way of a song the user picked: got past at once (the ad flag is already known). */
+        const val AD_PICK_ESCAPE_MS = 0L
         /** A play that leaves the page's repeat mode other than the user's: set again if it shows within this long. */
         const val REPEAT_RESTORE_MS = 20_000L
         /** An acknowledged command that never played is told 10 s after it was sent. */
