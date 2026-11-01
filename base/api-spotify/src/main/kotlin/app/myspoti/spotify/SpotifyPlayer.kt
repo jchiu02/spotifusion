@@ -460,8 +460,9 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
             // stall in seconds. Nothing plays: there is less to see, so it looks less often.
             val quiet = !_adPlaying.value && _state.value.let { it == null || it.isPaused }
             // An ad starting wakes it at once: its recovery starts AD_PLAYING_SKIP_MS after it.
+            // With a song of the user's waiting on the ad, at once: they never sit through it.
             if (withTimeoutOrNull(if (quiet) WATCH_IDLE_TICK_MS else WATCH_TICK_MS) { wake.receive() } != null)
-                delay(AD_PLAYING_SKIP_MS + 50)
+                delay(if (pickBeforeAd != null) AD_PICK_ESCAPE_MS else AD_PLAYING_SKIP_MS + 50)
             tick++
             // Repairs held (a sign-in page open, playback limited): nothing is judged, not even a
             // silent page, which is what a sign-in page looks like from here.
@@ -565,7 +566,9 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
                 // A video ad reports neither a position nor a speed the way an audio one does: it
                 // is taken as playing from the start, so it is got past instead of waited on.
                 val videoAd = ad?.item?.mediaType == "video"
-                val playing = ad != null && !refused && (videoAd || now - adSince > AD_PLAYING_SKIP_MS) && !adReloaded
+                // A song the user picked is waiting on this ad: got past at once, not after it played a while.
+                val pickWaiting = pickBeforeAd != null && now - adSince > AD_PICK_ESCAPE_MS
+                val playing = ad != null && !refused && (videoAd || pickWaiting || now - adSince > AD_PLAYING_SKIP_MS) && !adReloaded
                 val stuck = refused || playing || now - adSince > AD_BREAK_MAX_MS
                 // Measured on 20/10 (desktop, free account, a real ad with its audio refused): the
                 // page now keeps a refused ad current for good (20 min, buffering at 0:00), and
@@ -798,7 +801,8 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
     private fun holdPickForAd(pick: Pick) {
         if (!AdRecoveryRules.keepsPickBeforeAd(mirroring)) return
         pickBeforeAd = pick
-        bridge.logger?.invoke("play refused during an ad: ${pick.track ?: pick.context} held until the ad is over")
+        bridge.logger?.invoke("play refused during an ad: ${pick.track ?: pick.context} held, the ad is got past at once")
+        wake.trySend(Unit)
     }
 
     private fun refusedEverything() {
@@ -1499,7 +1503,8 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
             lastOrder = order?.let { contextUri to it }
             pausedByUser = false
             pickBeforeAd = Pick(contextUri, trackUri, System.currentTimeMillis(), order, positionMs, index)
-            bridge.logger?.invoke("pick during an ad: ${trackUri ?: contextUri} held until the ad is over")
+            bridge.logger?.invoke("pick during an ad: ${trackUri ?: contextUri} held, the ad is got past at once")
+            wake.trySend(Unit)
             return
         }
         pickBeforeAd = null
@@ -2003,6 +2008,8 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         const val REFUSED_WINDOW_MS = 5_000L
         /** After a refused pick, how long an ad may take to show up and explain it. */
         const val AD_REFUSAL_WAIT_MS = 1_200L
+        /** An ad in the way of a song the user picked: got past after that long (the ad's state settles). */
+        const val AD_PICK_ESCAPE_MS = 300L
         /** A play that leaves the page's repeat mode other than the user's: set again if it shows within this long. */
         const val REPEAT_RESTORE_MS = 20_000L
         /** An acknowledged command that never played is told 10 s after it was sent. */
