@@ -166,6 +166,7 @@ class ContextViewModel(
 
     private var lastType = ""
     private var lastId = ""
+    private var playlistWatch: kotlinx.coroutines.Job? = null
 
     /** After an edit (name, cover, description): the page from the server again. */
     fun reload() {
@@ -195,6 +196,21 @@ class ContextViewModel(
                 // id: "<artist id>|<artist name>"
                 "liked-artist" -> api.getLikedByArtistPage(id.substringBefore('|'), id.substringAfter('|', ""))
                 else -> api.getPlaylistPage(id)
+            }
+            // A playlist: a song added to or removed from it anywhere in the app (song menu,
+            // "Add to playlist") shows here too, without leaving and reopening the page.
+            if (type !in setOf("album", "liked", "liked-artist")) {
+                playlistWatch?.cancel()
+                playlistWatch = viewModelScope.launch(Dispatchers.IO) {
+                    com.music.spotui.data.api.SpotifySync.playlistChanges.collectLatest { changed ->
+                        if (changed != id) return@collectLatest
+                        recent.remove("$type:$id")
+                        kotlinx.coroutines.delay(1_500) // Spotify's playlist takes the change first
+                        api.getPlaylistPage(id).collect { r ->
+                            if (r is Response.Success) { _page.value = r; recent["$type:$id"] = r }
+                        }
+                    }
+                }
             }
             // Liked Songs: a like or unlike anywhere puts the list right at once.
             if (type == "liked") viewModelScope.launch(Dispatchers.IO) {

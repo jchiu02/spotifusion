@@ -18,6 +18,28 @@ object SpotifySync {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val api get() = MyspotiRuntime.api
 
+    /** The app changed the user's library (a playlist created): Library screens reload. */
+    val libraryChanges = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+
+    /** Ids of playlists whose songs the app changed: an open playlist page reloads. */
+    val playlistChanges = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 8)
+
+    // Playlists created a moment ago, kept in the Library until Spotify's own list has them
+    // (the library listing lags behind a create by a few seconds).
+    private const val CREATED_GRACE_MS = 60_000L
+    private val recentlyCreated = ConcurrentHashMap<String, Pair<com.music.spotui.data.entity.LibraryEntry, Long>>()
+
+    /** [list] (the Library's root level) with any just-created playlist it is missing, after Liked Songs. */
+    fun withRecentlyCreated(list: List<com.music.spotui.data.entity.LibraryEntry>): List<com.music.spotui.data.entity.LibraryEntry> {
+        val now = System.currentTimeMillis()
+        recentlyCreated.entries.removeIf { now - it.value.second > CREATED_GRACE_MS }
+        val have = list.map { it.spotifyId }.toSet()
+        val missing = recentlyCreated.values.sortedByDescending { it.second }.map { it.first }.filter { it.spotifyId !in have }
+        if (missing.isEmpty()) return list
+        val at = if (list.firstOrNull()?.spotifyId == Api.LIKED_SONGS_ID) 1 else 0
+        return list.take(at) + missing + list.drop(at)
+    }
+
     fun setTrackSaved(context: Context, trackId: String, saved: Boolean) {
         if (trackId.isNotBlank()) com.music.spotui.di.SongPlayer.setTrackSaved(trackId, saved)
     }
@@ -36,7 +58,7 @@ object SpotifySync {
         scope.launch {
             val ok = runCatching { api.playlists.addTracks("spotify:playlist:$playlistId", listOf("spotify:track:$trackId")) }
                 .onFailure { Log.w(TAG, "add $trackId to $playlistId failed: ${it.message}") }.isSuccess
-            if (ok) membershipCache[playlistId]?.add(trackId)
+            if (ok) { membershipCache[playlistId]?.add(trackId); playlistChanges.tryEmit(playlistId) }
             onDone(ok)
         }
     }
@@ -51,7 +73,7 @@ object SpotifySync {
                 check(uids.isNotEmpty()) { "track not in playlist" }
                 api.playlists.removeTracks(uri, uids)
             }.onFailure { Log.w(TAG, "remove $trackId from $playlistId failed: ${it.message}") }.isSuccess
-            if (ok) membershipCache[playlistId]?.remove(trackId)
+            if (ok) { membershipCache[playlistId]?.remove(trackId); playlistChanges.tryEmit(playlistId) }
             onDone(ok)
         }
     }
@@ -62,13 +84,27 @@ object SpotifySync {
         scope.launch {
             val ok = runCatching {
                 val uri = api.playlists.create(name.trim(), folderUri)
+                val id = uri.substringAfterLast(':')
+                if (folderUri == null) {
+                    // On screen at once, before Spotify's library listing has caught up.
+                    val entry = com.music.spotui.data.entity.LibraryEntry(
+                        spotifyId = id,
+                        name = name.trim(),
+                        subtitle = context.getString(app.myspoti.engine.R.string.assisted_curation_search_playlist),
+                        coverUri = "",
+                        isPlaylist = true,
+                        uri = uri,
+                    )
+                    recentlyCreated[id] = entry to System.currentTimeMillis()
+                    Api.HomeCache.libraryRoot = Api.HomeCache.libraryRoot?.let(::withRecentlyCreated)
+                }
                 if (trackId.isNotBlank()) {
                     api.playlists.addTracks(uri, listOf("spotify:track:$trackId"))
-                    membershipCache[uri.substringAfterLast(':')] = ConcurrentHashMap.newKeySet<String>().apply { add(trackId) }
+                    membershipCache[id] = ConcurrentHashMap.newKeySet<String>().apply { add(trackId) }
                 }
             }.onFailure { Log.w(TAG, "create playlist '$name' failed: ${it.message}") }.isSuccess
-            Api.HomeCache.libraryRoot = null
             folderUri?.let { Api.HomeCache.folders.remove(it) }
+            if (ok) libraryChanges.tryEmit(Unit)
             onDone(ok)
         }
     }

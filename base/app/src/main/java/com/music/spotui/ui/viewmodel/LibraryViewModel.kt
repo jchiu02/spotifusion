@@ -14,6 +14,7 @@ import com.music.spotui.ui.repository.AppRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class LibraryViewModel constructor(
@@ -41,6 +42,19 @@ class LibraryViewModel constructor(
         load()
         loadAccount()
         loadFollowedArtists()
+
+        // A playlist created anywhere in the app (Library "+", "Add to playlist" > New
+        // playlist): show it now, then again once Spotify's library listing has it.
+        viewModelScope.launch {
+            com.music.spotui.data.api.SpotifySync.libraryChanges.collectLatest {
+                (_entries.value as? Response.Success)?.data?.let {
+                    _entries.value = Response.Success(com.music.spotui.data.api.SpotifySync.withRecentlyCreated(it))
+                }
+                load()
+                kotlinx.coroutines.delay(3_000)
+                load()
+            }
+        }
     }
 
     fun load() = viewModelScope.launch(Dispatchers.IO) {

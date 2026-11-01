@@ -928,7 +928,7 @@ class Api constructor(
             val rootIds = rootItems.map { it.spotifyId }.toSet() + folderPlaylistIds
             val extraPlaylists = runCatching { api.playlists.mine().map(::playlistEntry) }.getOrDefault(emptyList())
                 .filter { it.spotifyId !in rootIds }
-            listOf(likedEntry()) + rootItems + extraPlaylists
+            SpotifySync.withRecentlyCreated(listOf(likedEntry()) + rootItems + extraPlaylists)
         }.fold(
             onSuccess = { HomeCache.libraryRoot = it; ScreenCache.libraryRoot.write(it); emit(Response.Success(it)) },
             onFailure = { Log.e("Api", "getLibraryRoot failed", it); if (HomeCache.libraryRoot == null) emit(Response.Error(it.message ?: "error")) },
