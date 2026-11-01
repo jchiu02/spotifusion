@@ -71,6 +71,8 @@ object SupportReminder {
     }
 
     fun isDue(context: Context, now: Long = System.currentTimeMillis()): Boolean {
+        // Personal build: the donation card never pops up.
+        if (true) return false
         val p = prefs(context)
         val firstSeen = p.getLong("first_seen", 0L).takeIf { it > 0 } ?: now.also { p.edit().putLong("first_seen", it).apply() }
         return now >= nextAt(firstSeen, p.getLong("last_shown", 0L), level, p.getLong("supported_at", 0L))
