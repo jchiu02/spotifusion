@@ -579,7 +579,11 @@ object SongPlayer {
      * the list it was picked from; when null, the last list that registered this track is used.
      */
     /** [order]: the context's track uris in the order to play them (a sorted playlist). */
-    fun playSong(song: String, context: Context? = null, contextUri: String? = null, order: List<String>? = null, positionMs: Long? = null) {
+    /**
+     * [standalone]: play the track on its own (a search result), like Spotify does: no list it was
+     * once seen in, so Spotify's autoplay picks similar songs after it instead of that playlist.
+     */
+    fun playSong(song: String, context: Context? = null, contextUri: String? = null, order: List<String>? = null, positionMs: Long? = null, standalone: Boolean = false) {
         val appCtx = Graph.app
         val episodeId = song.removePrefix("episode:").takeIf { song.startsWith("episode:") }
         val trackId = episodeId ?: spotifyTrackIdForPlayback(song) ?: return
@@ -604,7 +608,7 @@ object SongPlayer {
                         if (loc != null) localQueue.add(loc)
                     }
                 }
-                val ctx = contextUri ?: contextRegistry[song] ?: ""
+                val ctx = contextUri ?: (if (standalone) null else contextRegistry[song]) ?: ""
                 val ctxName = knownContextName(ctx).ifBlank { context?.let { "Cache / Local" } }
                 currentTrackId = trackId
                 if (Looper.myLooper() == Looper.getMainLooper()) LocalPlayer.play(localQueue, 0, context = ctxName, contextUri = ctx, fallback = true) else main.post { LocalPlayer.play(localQueue, 0, context = ctxName, contextUri = ctx, fallback = true) }
@@ -618,7 +622,7 @@ object SongPlayer {
         }
 
         if (Looper.myLooper() == Looper.getMainLooper()) LocalPlayer.stop() else main.post { LocalPlayer.stop() }
-        val ctx = contextUri ?: contextRegistry[song]
+        val ctx = contextUri ?: if (standalone) null else contextRegistry[song]
         lastRequestedSongKey = song
         lastRequestedContextUri = ctx.orEmpty()
         markPending(if (episodeId != null) "" else trackId, itemUri)

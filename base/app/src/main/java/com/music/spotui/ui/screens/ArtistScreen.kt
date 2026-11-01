@@ -185,7 +185,9 @@ private fun ArtistOverviewContent(
         val songs = tracks.map { it.song }
         artistViewModel.updateQueue(songs)
         val s = songs[index]
-        SongPlayer.playSong(s.url, context)
+        // Plays in the artist's context (their top songs, then Spotify's autoplay), not a
+        // playlist of yours the song happens to be in.
+        SongPlayer.playSong(s.url, context, contextUri = "spotify:artist:${overview.id}")
         artistViewModel.updateSongState(s.coverUri, s.title, s.singer, true, s.id, index)
     }
 
