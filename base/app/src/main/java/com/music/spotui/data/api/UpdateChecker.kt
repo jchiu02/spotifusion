@@ -22,7 +22,11 @@ object UpdateChecker {
     private const val INTERVAL_MS = 3 * 3_600_000L
     private val http by lazy { OkHttpClient.Builder().callTimeout(10, TimeUnit.SECONDS).addInterceptor(com.music.spotui.data.DataSaver.interceptor).build() }
 
+    /** Personal build: never offer the original app's releases (they would replace these changes). */
+    private const val ENABLED = false
+
     suspend fun check(context: Context, force: Boolean = false): Release? = withContext(Dispatchers.IO) {
+        if (!ENABLED) return@withContext null
         val repo = BuildConfig.UPDATE_REPO.ifBlank { "p1di/spotifusion" }
         if (repo.isBlank()) return@withContext null
         val prefs = context.getSharedPreferences("updates", Context.MODE_PRIVATE)
