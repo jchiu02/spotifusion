@@ -65,7 +65,7 @@ fun AboutSheet(onDismiss: () -> Unit) {
                     modifier = Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF121212)),
                 )
                 Column(Modifier.padding(start = 14.dp)) {
-                    Text("Spotifusion", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("SpotiDuck", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("${stringResource(R.string.settings_item_version_title)} ${BuildConfig.VERSION_NAME}",
                         color = Color(0xFFB3B3B3), fontSize = 13.sp)
                 }
@@ -98,7 +98,7 @@ fun GitHubSponsorButton(modifier: Modifier = Modifier, onClick: (() -> Unit)? = 
     ) { Text("Open on GitHub", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
 }
 
-/** "Support Spotifusion" from the profile menu. */
+/** "Support SpotiDuck" from the profile menu. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupportSheet(onDismiss: () -> Unit) {

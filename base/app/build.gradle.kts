@@ -19,14 +19,14 @@ android {
     compileSdk = 37
 
     // Two channels that install side by side: betas ("2.0.0-beta.3") stay "app.myspoti",
-    // signed with the first key, as "Spotifusion Beta"; releases are "app.myspoti.stable",
-    // signed with their own key, as "Spotifusion".
+    // signed with the first key, as "SpotiDuck Beta"; releases are "app.myspoti.stable",
+    // signed with their own key, as "SpotiDuck".
     // Local builds (no version given) are on the beta side, like the phone test builds.
     val version = (findProperty("appVersionName") as String?) ?: "1.1.0"
     val beta = findProperty("appVersionName") == null || version.contains("-")
     defaultConfig {
-        applicationId = "com.spotifusion.app"
-        manifestPlaceholders["appLabel"] = "Spotifusion"
+        applicationId = "com.spotiduck.app"
+        manifestPlaceholders["appLabel"] = "SpotiDuck"
         minSdk = 29
         targetSdk = 36
         // CI release builds pass the tag's version (-PappVersionName / -PappVersionCode).
@@ -72,7 +72,7 @@ android {
         debug {
             // Installs next to the release apps (own data, own sign-in).
             applicationIdSuffix = ".dev"
-            manifestPlaceholders["appLabel"] = "Spotifusion"
+            manifestPlaceholders["appLabel"] = "SpotiDuck"
         }
         release {
             // Real key when provided (CI releases); otherwise the debug key, so a local
