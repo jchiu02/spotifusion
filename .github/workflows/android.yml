@@ -58,7 +58,7 @@ jobs:
           git clone --depth 1 --branch ci-logs "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "$out" \
             || { git init -q "$out"; git -C "$out" checkout -q -b ci-logs; git -C "$out" remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"; }
           f="$out/${GITHUB_REF_NAME}-${GITHUB_SHA::7}.log"
-          { echo "== errors =="; grep -nE "^e: |error:|FAILED|What went wrong|Could not (find|resolve)" "$log" | head -200; echo; echo "== tail =="; tail -n 300 "$log"; } > "$f"
+          { echo "== errors =="; grep -nE "^e: |error:|FAILED|What went wrong|Could not (find|resolve)|requires libraries|compile against version" "$log" | head -200; echo; echo "== tail =="; tail -n 300 "$log"; } > "$f"
           git -C "$out" add -A && git -C "$out" commit -qm "build log ${GITHUB_SHA::7}" && git -C "$out" push -q origin ci-logs
 
       - uses: actions/upload-artifact@v7
