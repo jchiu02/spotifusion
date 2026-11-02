@@ -85,7 +85,42 @@ object SongPlayer {
     @Volatile private var wantPlayingUntil = 0L
     @Volatile private var wantPausedUntil = 0L
 
-    private fun intendPlaying() { wantPlayingUntil = SystemClock.elapsedRealtime() + 4000; wantPausedUntil = 0; userWantsPlaying = true }
+    private fun intendPlaying() { wantPlayingUntil = SystemClock.elapsedRealtime() + 4000; wantPausedUntil = 0; userWantsPlaying = true; userMovedAt = SystemClock.elapsedRealtime() }
+
+    // ── A song from outside the playlist cutting in ──
+    // Reported: listening to a song of the user's own playlist, another song not in it started
+    // (an ad left out on Spotify's side sent the player to a song Spotify picked). While a playlist
+    // plays, a song nobody picked or queued that is not in it is replaced by the playlist's next.
+    @Volatile private var userMovedAt = 0L
+    @Volatile private var offListFixedAt = 0L
+    private const val USER_MOVE_GRACE_MS = 6_000L
+    private const val OFF_LIST_GAP_MS = 10_000L
+
+    private fun guardOffList(prevId: String, s: PlayerState) {
+        val item = s.item ?: return
+        if (item.kind != app.myspoti.api.ItemKind.TRACK) return
+        val ctx = s.contextUri.orEmpty()
+        val newId = trackIdOf(item.uri)
+        if (prevId.isBlank() || newId.isBlank() || newId == prevId) return
+        val now = SystemClock.elapsedRealtime()
+        // The user's own pick, skip or queued song; or the guard acted a moment ago.
+        if (now - userMovedAt < USER_MOVE_GRACE_MS || now - offListFixedAt < OFF_LIST_GAP_MS) return
+        if (item.provider == "queue") return
+        if (LocalPlayer.active.value || _activeDevice.value != null || adState.value) return
+        val ids = QueuePreloader.playlistIds(ctx) ?: return
+        if (newId in ids) return
+        val at = ids.indexOf(prevId)
+        // The playlist's last song: what comes after it is autoplay (Settings), not this guard's.
+        if (at < 0 || at >= ids.lastIndex) return
+        val next = if (s.shuffle) {
+            // Shuffle: the first song Spotify lines up that is in the playlist.
+            (_queue.value.queued + _queue.value.nextUp).map { it.song.spotifyTrackId }.firstOrNull { it.isNotBlank() && it in ids && it != prevId }
+        } else ids.drop(at + 1).firstOrNull { it.isNotBlank() }
+        next ?: return
+        offListFixedAt = now
+        Log.w(TAG, "${item.name} is not in the playlist and nobody picked it: playing the playlist's next song ($next) instead")
+        transport { api.player.play(ctx, trackUri = SPOTIFY_TRACK_PREFIX + next) }
+    }
     private fun intendPaused() { wantPausedUntil = SystemClock.elapsedRealtime() + 1500; wantPlayingUntil = 0; userWantsPlaying = false }
 
     // ── Pauses nobody asked for ──
@@ -439,6 +474,7 @@ object SongPlayer {
         }
         checkUnaskedPause(s)
         val trackChanged = uri != _nowPlaying.value.uri
+        if (trackChanged && item != null) guardOffList(trackIdOf(_nowPlaying.value.uri), s)
         // Autoplay off: stop once, when the player moves on to a track it picked itself.
         // Tracks only: this is the music setting (similar songs). An episode the page rolls on
         // to after the previous one belongs to the show, not to that recommendation autoplay —
@@ -707,6 +743,7 @@ object SongPlayer {
         if (Looper.myLooper() == Looper.getMainLooper()) LocalPlayer.stop() else main.post { LocalPlayer.stop() }
         val ctx = contextUri ?: if (standalone) null else contextRegistry[song]
         userWantsPlaying = true
+        userMovedAt = SystemClock.elapsedRealtime()
         lastRequestedSongKey = song
         lastRequestedContextUri = ctx.orEmpty()
         markPending(if (episodeId != null) "" else trackId, itemUri)

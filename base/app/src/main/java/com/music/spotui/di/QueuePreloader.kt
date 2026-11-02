@@ -63,6 +63,11 @@ object QueuePreloader {
     @Volatile var plan: List<String> = emptyList()
         private set
 
+    /** The track ids of [contextUri] in its own order, when that playlist's songs were fetched. */
+    fun playlistIds(contextUri: String): List<String>? =
+        if (contextUri.startsWith("spotify:playlist:") && contextUri.substringAfterLast(':') == listFor && listSongs.isNotEmpty())
+            listSongs.map { it.spotifyTrackId } else null
+
     // A playlist's songs, fetched once per playlist while it plays.
     private var listFor = ""
     private var listSongs: List<com.music.spotui.data.entity.SongsModel> = emptyList()
