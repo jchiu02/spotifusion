@@ -63,6 +63,12 @@
             android:value="true" />
 
 
+        <!-- Experimental: the Web Player in Firefox's engine (GeckoView), opened from Settings. -->
+        <activity
+            android:name="app.myspoti.GeckoTestActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
         <activity
             android:name="app.myspoti.MainActivity"
             android:exported="true"

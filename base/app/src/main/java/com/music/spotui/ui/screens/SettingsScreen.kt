@@ -142,6 +142,15 @@ fun SettingsScreen(navController: NavController) {
             Divider()
 
             Section(R.string.settings_section_app)
+            // Experimental: does Spotify's Web Player play in Firefox's engine on this phone?
+            Column(
+                Modifier.fillMaxWidth().clickable {
+                    ctx.startActivity(android.content.Intent(ctx, app.myspoti.GeckoTestActivity::class.java))
+                }.padding(horizontal = 20.dp, vertical = 10.dp),
+            ) {
+                Text("Test the Firefox player (experimental)", color = Color.White, fontSize = 16.sp)
+                Text("Opens Spotify's web player in Firefox's engine. Sign in and play a song: does it play?", color = Color(0xFFB3B3B3), fontSize = 12.sp)
+            }
             // The hidden Web Player stuck or crashed: rebuild it without leaving the app.
             Column(
                 Modifier.fillMaxWidth().clickable { app.myspoti.host.android.MyspotiRuntime.host.reload() }

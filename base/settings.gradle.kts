@@ -19,6 +19,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // GeckoView (Firefox's engine), for the experimental Firefox player.
+        maven("https://maven.mozilla.org/maven2/") {
+            content { includeGroup("org.mozilla.geckoview") }
+        }
         maven("https://jitpack.io") {
             content { includeGroupByRegex("com\\.github\\..*") }
         }

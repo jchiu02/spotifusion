@@ -100,6 +100,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     // The SpotiFLAC verification opens in a browser tab, as SpotiFLAC Mobile does.
     implementation("androidx.browser:browser:1.8.0")
+    // Experimental: Firefox's engine (GeckoView), 64-bit ARM only to keep the APK size down.
+    implementation("org.mozilla.geckoview:geckoview-arm64-v8a:[130.0,)")
     testImplementation("junit:junit:4.13.2")
     // The real org.json in unit tests (android.jar only has stubs).
     testImplementation("org.json:json:20240303")
