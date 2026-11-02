@@ -85,8 +85,80 @@ object SongPlayer {
     @Volatile private var wantPlayingUntil = 0L
     @Volatile private var wantPausedUntil = 0L
 
-    private fun intendPlaying() { wantPlayingUntil = SystemClock.elapsedRealtime() + 4000; wantPausedUntil = 0 }
-    private fun intendPaused() { wantPausedUntil = SystemClock.elapsedRealtime() + 1500; wantPlayingUntil = 0 }
+    private fun intendPlaying() { wantPlayingUntil = SystemClock.elapsedRealtime() + 4000; wantPausedUntil = 0; userWantsPlaying = true }
+    private fun intendPaused() { wantPausedUntil = SystemClock.elapsedRealtime() + 1500; wantPlayingUntil = 0; userWantsPlaying = false }
+
+    // ── Pauses nobody asked for ──
+    // True from a play / pick / skip until a pause the app itself sends (the user's, headphones
+    // out, the sleep timer, the end with autoplay off). A pause the page reports in between was
+    // not asked for (the page stalled, Spotify paused it): playback is resumed.
+    @Volatile private var userWantsPlaying = false
+    private val autoResumes = ArrayList<Long>()
+    @Volatile private var autoResumeQueued = false
+    private const val AUTO_RESUME_CHECK_MS = 2_000L
+    private const val AUTO_RESUME_MAX = 3
+    private const val AUTO_RESUME_WINDOW_MS = 60_000L
+
+    private fun checkUnaskedPause(s: PlayerState) {
+        val item = s.item ?: return
+        if (!s.isPaused || !userWantsPlaying || autoResumeQueued) return
+        if (item.kind != app.myspoti.api.ItemKind.TRACK && item.kind != app.myspoti.api.ItemKind.EPISODE) return
+        // The end of the list: nothing to go on with.
+        val d = item.durationMs
+        if (d > 0 && s.positionAt(System.currentTimeMillis()) >= d - 3_000) return
+        autoResumeQueued = true
+        main.postDelayed({
+            autoResumeQueued = false
+            val st = api.player.state.value ?: return@postDelayed
+            if (!st.isPaused || !userWantsPlaying || LocalPlayer.active.value || adState.value) return@postDelayed
+            // Another device of the account took over (the Spotify app, a speaker): not fought.
+            if (_activeDevice.value != null) return@postDelayed
+            // Spotify limiting this client: resuming would only be refused.
+            if (MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.playbackHeld()) return@postDelayed
+            // A call, or another app playing sound (a video): it has the speaker now.
+            val am = Graph.app.getSystemService(android.media.AudioManager::class.java)
+            if (am != null && (am.mode == android.media.AudioManager.MODE_IN_CALL ||
+                    am.mode == android.media.AudioManager.MODE_IN_COMMUNICATION || am.isMusicActive)) return@postDelayed
+            val now = SystemClock.elapsedRealtime()
+            autoResumes.removeAll { now - it > AUTO_RESUME_WINDOW_MS }
+            if (autoResumes.size >= AUTO_RESUME_MAX) {
+                Log.w(TAG, "paused again after $AUTO_RESUME_MAX resumes in a minute: left paused")
+                userWantsPlaying = false
+                return@postDelayed
+            }
+            autoResumes += now
+            Log.i(TAG, "paused without being asked (${st.item?.name}): resuming")
+            wantPlayingUntil = now + 4000
+            playing = true; positionAt = now
+            transport { api.player.resume() }
+        }, AUTO_RESUME_CHECK_MS)
+    }
+
+    // ── Signal lost (the Tube): the list goes on from the songs kept on this phone ──
+    private const val OFFLINE_SWITCH_CHECK_MS = 3_000L
+
+    /** Called when the phone's network goes away. */
+    fun onNetworkLost() {
+        main.postDelayed({
+            // A Wi-Fi / mobile hand-over: back within a moment, nothing to do.
+            if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return@postDelayed
+            if (LocalPlayer.active.value || !playing || _activeDevice.value != null || adState.value) return@postDelayed
+            val q = _queue.value
+            val ids = (listOf(currentTrackId) + q.queued.map { it.song.spotifyTrackId } + q.nextUp.map { it.song.spotifyTrackId })
+                .filter { it.isNotBlank() }.distinct()
+            val kept = ids.mapNotNull { id ->
+                val local = com.music.spotui.data.offline.OfflineStore.tracks[id]?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
+                    ?: com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks[id]?.let(com.music.spotui.data.cache.PlaybackCacheStore::toLocalTrack)
+                local?.let { id to it }
+            }
+            if (kept.isEmpty()) { Log.i(TAG, "signal lost: none of the songs ahead are on this phone"); return@postDelayed }
+            val from = if (kept.first().first == currentTrackId) getCurrentPosition() else 0L
+            val ctx = currentContextUri
+            Log.i(TAG, "signal lost: ${kept.size} of ${ids.size} songs ahead play from this phone")
+            LocalPlayer.play(kept.map { it.second }, 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = true)
+            if (from > 0) LocalPlayer.seekTo(from)
+        }, OFFLINE_SWITCH_CHECK_MS)
+    }
 
     private fun resolvePlaying(paused: Boolean): Boolean {
         val now = SystemClock.elapsedRealtime()
@@ -362,6 +434,7 @@ object SongPlayer {
             positionMs = reported
             positionAt = SystemClock.elapsedRealtime()
         }
+        checkUnaskedPause(s)
         val trackChanged = uri != _nowPlaying.value.uri
         // Autoplay off: stop once, when the player moves on to a track it picked itself.
         // Tracks only: this is the music setting (similar songs). An episode the page rolls on
@@ -630,6 +703,7 @@ object SongPlayer {
 
         if (Looper.myLooper() == Looper.getMainLooper()) LocalPlayer.stop() else main.post { LocalPlayer.stop() }
         val ctx = contextUri ?: if (standalone) null else contextRegistry[song]
+        userWantsPlaying = true
         lastRequestedSongKey = song
         lastRequestedContextUri = ctx.orEmpty()
         markPending(if (episodeId != null) "" else trackId, itemUri)

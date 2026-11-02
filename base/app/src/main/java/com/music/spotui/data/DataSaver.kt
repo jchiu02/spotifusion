@@ -73,6 +73,7 @@ object DataSaver {
                 override fun onLost(network: Network) {
                     metered = cm.isActiveNetworkMetered
                     changed()
+                    com.music.spotui.di.SongPlayer.onNetworkLost()
                 }
             })
         }
