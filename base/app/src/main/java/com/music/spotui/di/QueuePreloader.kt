@@ -43,8 +43,11 @@ object QueuePreloader {
         // queue only ever lists a few songs ahead).
         scope.launch {
             snapshotFlow { SongPlayer.engineQueue.value to SongPlayer.nowPlaying.value.contextUri }.collectLatest { (eq, ctx) ->
-                kotlinx.coroutines.delay(1_000) // a skip burst settles first
                 val current = eq.current
+                // The song playing first and at once: should the signal go, it goes on from the
+                // phone instead of the music switching to a song further down.
+                if (current != null && current.spotifyTrackId == SongPlayer.currentTrackId) PlaybackCacheManager.preloadTracks(listOf(current))
+                kotlinx.coroutines.delay(1_000) // a skip burst settles first
                 val upcoming = listOfNotNull(current) + eq.queued.map { it.song } + eq.nextUp.map { it.song }
                 val rest = if (ctx.startsWith("spotify:playlist:")) {
                     val list = playlistSongs(ctx.substringAfterLast(':'))

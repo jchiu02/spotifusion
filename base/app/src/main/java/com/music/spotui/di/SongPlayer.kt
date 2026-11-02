@@ -182,6 +182,36 @@ object SongPlayer {
         }, OFFLINE_SWITCH_CHECK_MS)
     }
 
+    /**
+     * Offline, with the song playing not saved: it plays on from what Spotify already loaded. The
+     * saved songs after it start only when that runs out (the page buffering for a few seconds)
+     * or the song ends, never in its middle; the signal coming back ends the wait.
+     */
+    private fun followAfterBuffer(trackId: String, after: List<com.music.spotui.data.local.LocalTrack>) {
+        var stuckSince = 0L
+        val started = SystemClock.elapsedRealtime()
+        val tick = object : Runnable {
+            override fun run() {
+                if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) { app.myspoti.host.android.Logbook.log("signal back: Spotify goes on"); return }
+                if (LocalPlayer.active.value || currentTrackId != trackId || !userWantsPlaying) return
+                if (SystemClock.elapsedRealtime() - started > FOLLOW_MAX_MS) return
+                val now = SystemClock.elapsedRealtime()
+                stuckSince = if (isBuffering) (if (stuckSince == 0L) now else stuckSince) else 0L
+                val atEnd = durationMs > 0 && getCurrentPosition() >= durationMs - 1_000
+                if (atEnd || (stuckSince != 0L && now - stuckSince >= FOLLOW_STUCK_MS)) {
+                    app.myspoti.host.android.Logbook.log("offline: ${if (atEnd) "the song ended" else "Spotify's buffer ran out"}: the saved songs after it play from this phone")
+                    val ctx = currentContextUri
+                    LocalPlayer.play(after, 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = true)
+                    return
+                }
+                main.postDelayed(this, 1_000)
+            }
+        }
+        main.post(tick)
+    }
+    private const val FOLLOW_STUCK_MS = 4_000L
+    private const val FOLLOW_MAX_MS = 15 * 60_000L
+
     private fun handOverOffline() {
         run {
             if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return
@@ -201,7 +231,9 @@ object SongPlayer {
             // Reported: with it not saved yet, the first saved song further down played instead,
             // a "random" switch in the middle of a song after a blip of mobile signal.
             if (kept.firstOrNull()?.first != currentTrackId) {
-                app.myspoti.host.android.Logbook.log("signal lost: the song playing is not on this phone, left to Spotify's buffer")
+                if (kept.isEmpty()) { app.myspoti.host.android.Logbook.log("signal lost: none of the songs ahead are on this phone"); return }
+                app.myspoti.host.android.Logbook.log("signal lost: the song playing is not on this phone: it plays on from Spotify's buffer, then ${kept.size} saved songs follow")
+                followAfterBuffer(currentTrackId, kept.map { it.second })
                 return
             }
             val from = getCurrentPosition()
