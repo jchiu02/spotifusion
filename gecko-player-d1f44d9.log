@@ -1,0 +1,76 @@
+== errors ==
+36:> Task :app:checkDebugAarMetadata FAILED
+42:* What went wrong:
+68:BUILD FAILED in 36s
+
+== tail ==
+Starting a Gradle Daemon (subsequent builds will be faster)
+Parallel Configuration Cache is an incubating feature.
+Calculating task graph as no cached configuration is available for tasks: testDebugUnitTest :api:test :api-spotify:test :host-cdp:test
+> Task :api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api:processResources NO-SOURCE
+> Task :api-spotify:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api-spotify:processResources
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig FROM-CACHE
+> Task :app:generateDebugResources FROM-CACHE
+> Task :api:compileKotlin FROM-CACHE
+> Task :api:compileJava NO-SOURCE
+> Task :api:classes UP-TO-DATE
+> Task :app:packageDebugResources FROM-CACHE
+> Task :host-android:preBuild UP-TO-DATE
+> Task :host-android:preDebugBuild UP-TO-DATE
+> Task :host-android:processDebugNavigationResources FROM-CACHE
+> Task :api:jar
+> Task :api-spotify:compileKotlin FROM-CACHE
+> Task :api-spotify:compileJava NO-SOURCE
+> Task :api-spotify:classes
+> Task :api-spotify:jar
+> Task :host-android:generateDebugResources FROM-CACHE
+> Task :host-android:packageDebugResources FROM-CACHE
+> Task :host-android:parseDebugLocalResources FROM-CACHE
+> Task :host-android:generateDebugRFile FROM-CACHE
+> Task :host-android:compileDebugKotlin FROM-CACHE
+> Task :host-android:javaPreCompileDebug FROM-CACHE
+> Task :host-android:compileDebugJavaWithJavac NO-SOURCE
+> Task :host-android:bundleLibCompileToJarDebug
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :host-android:writeDebugAarMetadata
+> Task :app:processDebugNavigationResources FROM-CACHE
+> Task :app:parseDebugLocalResources FROM-CACHE
+> Task :app:checkDebugAarMetadata FAILED
+> Task :app:generateDebugRFile FROM-CACHE
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793581761011.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:checkDebugAarMetadata' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckAarMetadataWorkAction
+   > An issue was found when checking AAR metadata:
+     
+       1.  Dependency 'org.mozilla.geckoview:geckoview-arm64-v8a:159.0.20261022150525' requires libraries and applications that
+           depend on it to compile against version 37.2 or later of the
+           Android APIs.
+     
+           :app is currently compiled against android-37.0.
+     
+           Recommended action: Update this project to use a newer compileSdk
+           of 37.2.
+     
+           Note that updating a library or application's compileSdk (which
+           allows newer APIs to be used) can be done separately from updating
+           targetSdk (which opts the app in to new runtime behavior) and
+           minSdk (which determines which devices the app can be installed
+           on).
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 36s
+22 actionable tasks: 6 executed, 16 from cache
+Configuration cache entry stored.
