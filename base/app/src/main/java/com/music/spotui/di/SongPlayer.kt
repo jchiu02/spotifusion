@@ -1220,6 +1220,7 @@ object SongPlayer {
                     }
                 }.onSuccess {
                     if (track) likedChanges.value++
+                    else com.music.spotui.data.api.SpotifySync.libraryChanges.tryEmit(Unit)
                 }.onFailure {
                     Log.w(TAG, "library change failed: ${it.message}")
                     if (write == libraryWrites.get()) {

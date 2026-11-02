@@ -639,7 +639,10 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, top = 15.dp, bottom = 12.dp)
                 ) {
-                    if (p.type == "album") {
+                    // Albums, and playlists made by someone else: the heart saves them to Your Library.
+                    val othersPlaylist = p.type == "playlist" && p.uri.startsWith("spotify:playlist:") &&
+                        com.music.spotui.data.api.ProfileCache.id?.let { p.ownerUri == "spotify:user:$it" } != true
+                    if (p.type == "album" || othersPlaylist) {
                         LikeButton(liked = SongPlayer.library[p.uri] ?: contextSaved, size = 26.dp) { vm.toggleContextSaved(p) }
                         Spacer(Modifier.width(24.dp))
                     }

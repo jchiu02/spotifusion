@@ -1,5 +1,8 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import kotlinx.coroutines.launch
 import com.music.spotui.ui.components.pressable
@@ -770,12 +773,22 @@ fun SearchAlbumRow(album: com.music.spotui.data.entity.AlbumsModel, onClick: () 
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SearchPlaylistRow(playlist: com.music.spotui.data.entity.LibraryEntry, onClick: () -> Unit) {
+    // Hold the row, or tap ⋮: save someone else's playlist to Your Library without opening it.
+    var menu by remember { mutableStateOf(false) }
+    val uri = playlist.uri.ifBlank { "spotify:playlist:${playlist.spotifyId}" }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.pressable(0.96f) { onClick() }.fillMaxWidth().padding(16.dp, 8.dp),
+        modifier = Modifier
+            .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onLongClick = { menu = true },
+                onClick = onClick,
+            )
+            .fillMaxWidth().padding(16.dp, 8.dp),
     ) {
         GlideImage(
             transition = CrossFade,
@@ -786,11 +799,31 @@ fun SearchPlaylistRow(playlist: com.music.spotui.data.entity.LibraryEntry, onCli
             loading = placeholder(R.drawable.placeholder),
             contentDescription = "",
         )
-        Column {
+        Column(Modifier.weight(1f)) {
             Text(text = playlist.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             Text(text = stringResource(R.string.assisted_curation_search_playlist) +
                 (if (playlist.subtitle.isNotBlank()) " • ${playlist.subtitle}" else ""),
                 color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        }
+        Icon(
+            Icons.Filled.MoreVert, contentDescription = "More",
+            tint = Color(0xFFB3B3B3),
+            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).clickable { menu = true }.padding(8.dp),
+        )
+    }
+    if (menu) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { menu = false }, containerColor = Color(0xFF282828)) {
+        Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
+            Text(playlist.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(20.dp, 0.dp, 20.dp, 12.dp))
+            com.music.spotui.ui.components.SaveToLibraryRow(uri) { menu = false }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { menu = false; onClick() }.padding(20.dp, 14.dp),
+            ) {
+                Icon(Icons.Filled.QueueMusic, contentDescription = null, tint = Color(0xFFB3B3B3), modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(16.dp))
+                Text("Go to playlist", color = Color.White, fontSize = 16.sp)
+            }
         }
     }
 }

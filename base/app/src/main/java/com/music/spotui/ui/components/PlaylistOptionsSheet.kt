@@ -1,5 +1,7 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
@@ -136,7 +138,10 @@ fun PlaylistOptionsSheet(
                 }
                 Spacer(Modifier.height(8.dp))
                 OptionRow(Icons.Outlined.Delete, stringResource(R.string.local_delete_playlist)) { deleting = true }
-            } else if (page.ownerUri.startsWith("spotify:user:")) {
+            } else {
+                SaveToLibraryRow(page.uri)
+            }
+            if (!mine && page.ownerUri.startsWith("spotify:user:")) {
                 OptionRow(Icons.Outlined.Person, stringResource(R.string.go_to_profile)) {
                     onDismiss(); onProfile(page.ownerUri.substringAfterLast(':'))
                 }
@@ -284,5 +289,26 @@ private fun AccessRow(icon: ImageVector, label: Int, detail: Int, selected: Bool
             Text(stringResource(detail), color = Color(0xFFB3B3B3), fontSize = 13.sp)
         }
         if (selected) Icon(Icons.Default.Check, null, tint = AppAccent, modifier = Modifier.size(20.dp))
+    }
+}
+
+
+/** "Add to Your Library" / "Remove from Your Library" for a playlist made by someone else. */
+@Composable
+fun SaveToLibraryRow(uri: String, after: () -> Unit = {}) {
+    val context = LocalContext.current
+    var saved by remember(uri) { mutableStateOf(com.music.spotui.di.SongPlayer.library[uri]) }
+    LaunchedEffect(uri) {
+        if (saved == null) saved = uri in com.music.spotui.di.SongPlayer.libraryContains(listOf(uri))
+    }
+    val on = com.music.spotui.di.SongPlayer.library[uri] ?: saved ?: false
+    OptionRow(
+        if (on) Icons.Outlined.RemoveCircleOutline else Icons.Outlined.AddCircleOutline,
+        if (on) "Remove from Your Library" else "Add to Your Library",
+    ) {
+        com.music.spotui.di.SongPlayer.setSaved(uri, !on)
+        saved = !on
+        android.widget.Toast.makeText(context, if (on) "Removed from Your Library" else "Added to Your Library", android.widget.Toast.LENGTH_SHORT).show()
+        after()
     }
 }
