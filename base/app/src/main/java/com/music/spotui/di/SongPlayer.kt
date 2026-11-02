@@ -130,7 +130,7 @@ object SongPlayer {
     @Volatile private var userWantsPlaying = false
     private val autoResumes = ArrayList<Long>()
     @Volatile private var autoResumeQueued = false
-    private const val AUTO_RESUME_CHECK_MS = 2_000L
+    private const val AUTO_RESUME_CHECK_MS = 1_000L
     private const val AUTO_RESUME_MAX = 3
     private const val AUTO_RESUME_WINDOW_MS = 60_000L
 
@@ -198,7 +198,7 @@ object SongPlayer {
             }
         }, NOTHING_PLAYS_CHECK_MS)
     }
-    private const val NOTHING_PLAYS_CHECK_MS = 4_000L
+    private const val NOTHING_PLAYS_CHECK_MS = 1_000L
 
     // ── Signal lost (the Tube): the list goes on from the songs kept on this phone ──
     private const val OFFLINE_SWITCH_CHECK_MS = 3_000L
