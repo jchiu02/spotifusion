@@ -1,0 +1,307 @@
+== errors ==
+139:AdFlagTest > an ad break whose end was never pushed is cleared once the page plays a song() FAILED
+321:> Task :api-spotify:test FAILED
+330:* What went wrong:
+337:BUILD FAILED in 2m 9s
+
+== tail ==
+> Task :app:processDebugManifestForPackage FROM-CACHE
+> Task :host-android:mapDebugSourceSetPaths
+> Task :host-android:compileDebugLibraryResources FROM-CACHE
+> Task :app:processDebugResources FROM-CACHE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :host-android:preDebugUnitTestBuild UP-TO-DATE
+> Task :host-android:generateDebugUnitTestStubRFile FROM-CACHE
+> Task :host-android:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :api:compileTestKotlin NO-SOURCE
+> Task :api:compileTestJava NO-SOURCE
+> Task :api:processTestResources NO-SOURCE
+> Task :api:testClasses UP-TO-DATE
+> Task :api:test NO-SOURCE
+> Task :api-spotify:processTestResources NO-SOURCE
+> Task :host-cdp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :host-cdp:processResources NO-SOURCE
+> Task :host-cdp:processTestResources NO-SOURCE
+
+> Task :api-spotify:compileKotlin
+w: file:///home/runner/work/spotifusion/spotifusion/base/api-spotify/src/main/kotlin/app/myspoti/spotify/SpotifyPlayer.kt:1626:78 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Double'.
+
+> Task :api-spotify:compileJava NO-SOURCE
+> Task :api-spotify:classes
+> Task :api-spotify:jar
+> Task :api-spotify:compileTestKotlin
+> Task :api-spotify:compileTestJava NO-SOURCE
+> Task :api-spotify:testClasses UP-TO-DATE
+
+> Task :host-android:compileDebugKotlin
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/ControlRelay.kt:149:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/ControlRelay.kt:171:83 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/CronetStack.kt:105:47 'class UploadDataProviders : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/Fingerprint.kt:144:38 Unnecessary safe call on a non-null receiver of type 'JSONObject'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/MediaProxy.kt:46:13 Condition is always 'false'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:25:8 'class NotificationCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:81:87 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:82:64 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:89:25 'class MediaBrowserServiceCompat : Service' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:90:35 'class MediaSessionCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:108:19 'constructor(p0: Context, p1: String): MediaSessionCompat' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:114:30 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:114:50 'constructor(): PlaybackStateCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:116:27 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:132:9 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:214:56 'class Callback : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:259:49 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:259:69 'constructor(): MediaMetadataCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:260:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:261:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:262:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:263:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:264:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:265:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:269:27 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:270:27 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:278:47 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:279:29 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:280:21 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:282:34 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:282:54 'constructor(): PlaybackStateCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:309:74 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:389:66 'static field WIFI_MODE_FULL_HIGH_PERF: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:440:30 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:440:86 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:446:17 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:447:34 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:447:73 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:449:17 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:449:73 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:452:17 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:453:34 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:453:79 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:454:23 'constructor(): NotificationCompat.MediaStyle' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:479:46 'class VolumeProviderCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:490:92 'class BrowserRoot : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:501:20 'constructor(p0: String, p1: Bundle?): MediaBrowserServiceCompat.BrowserRoot' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:503:16 'constructor(p0: String, p1: Bundle?): MediaBrowserServiceCompat.BrowserRoot' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:512:59 'class Result<T : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:512:97 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:532:67 'class Result<T : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:532:105 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:589:31 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:589:66 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:589:102 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:590:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:590:56 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:591:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:591:51 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:592:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:594:36 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:594:79 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/RelayNetwork.kt:77:21 Unnecessary safe call on a non-null receiver of type 'LinkProperties'.
+
+> Task :host-android:compileDebugJavaWithJavac NO-SOURCE
+> Task :host-android:bundleLibCompileToJarDebug
+
+> Task :api-spotify:test
+
+AdFlagTest > an ad break whose end was never pushed is cleared once the page plays a song() FAILED
+    org.opentest4j.AssertionFailedError at AdFlagTest.kt:84
+
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/app/myspoti/MyspotiApplication.kt:28:104 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/app/myspoti/MyspotiApplication.kt:30:81 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/data/offline/OfflineDownloader.kt:570:21 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/data/offline/OfflineDownloader.kt:750:52 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/data/offline/OfflineDownloader.kt:753:53 Elvis operator (?:) always returns the left operand of non-nullable type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/data/offline/OfflineDownloader.kt:839:33 Elvis operator (?:) always returns the left operand of non-nullable type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:6:8 'class MediaBrowserCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:86:68 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:133:90 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:134:17 'class MediaDescriptionCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:134:40 'constructor(): MediaDescriptionCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:137:16 'constructor(p0: MediaDescriptionCompat, p1: Int): MediaBrowserCompat.MediaItem' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:137:29 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:140:52 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:148:57 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:151:29 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:159:58 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:170:61 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:191:54 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:192:29 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:207:56 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:209:21 'class MediaDescriptionCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:209:44 'constructor(): MediaDescriptionCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:212:13 'constructor(p0: MediaDescriptionCompat, p1: Int): MediaBrowserCompat.MediaItem' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:212:26 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:225:56 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:238:45 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:243:29 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:350:75 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:374:135 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:375:17 'class MediaDescriptionCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:375:40 'constructor(): MediaDescriptionCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:377:16 'constructor(p0: MediaDescriptionCompat, p1: Int): MediaBrowserCompat.MediaItem' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:377:29 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:380:85 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:381:17 'class MediaDescriptionCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:381:40 'constructor(): MediaDescriptionCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:383:16 'constructor(p0: MediaDescriptionCompat, p1: Int): MediaBrowserCompat.MediaItem' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:383:29 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:386:96 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:387:17 'class MediaDescriptionCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:387:40 'constructor(): MediaDescriptionCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:390:16 'constructor(p0: MediaDescriptionCompat, p1: Int): MediaBrowserCompat.MediaItem' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/AutoBrowser.kt:390:29 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/lossless/ZarzSession.kt:144:48 Return in function with expression body and without explicit return type. Use block body '{...}' or add an explicit return type. This will become an error in language version 2.5. See https://youtrack.jetbrains.com/issue/KTLC-288.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/lossless/ZarzSession.kt:146:38 Return in function with expression body and without explicit return type. Use block body '{...}' or add an explicit return type. This will become an error in language version 2.5. See https://youtrack.jetbrains.com/issue/KTLC-288.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/AboutSheet.kt:58:49 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/AboutSheet.kt:108:49 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/AddToPlaylistSheet.kt:70:22 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/AppComponents.kt:337:9 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/ArtistOptionsSheet.kt:51:22 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/EpisodeSheets.kt:146:24 Unnecessary safe call on a non-null receiver of type 'String'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/EpisodeSheets.kt:152:28 Unnecessary safe call on a non-null receiver of type 'String'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/EpisodeSheets.kt:162:44 'val Icons.Outlined.Undo: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.Undo.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/EpisodeSheets.kt:174:40 'val Icons.Outlined.PlaylistAdd: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.PlaylistAdd.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/MusicVideo.kt:84:31 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExoPlayer'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/PlayerSheets.kt:430:22 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/PlayerSheets.kt:838:19 'fun rememberSwipeToDismissBoxState(initialValue: SwipeToDismissBoxValue = ..., confirmValueChange: (SwipeToDismissBoxValue) -> Boolean = ..., positionalThreshold: (Float) -> Float = ...): SwipeToDismissBoxState' is deprecated. confirmValueChange is deprecated without replacement. Rather than relying on a callback to veto state changes, the anchor set should not include disallowed anchors. See androidx.compose.foundation.samples.AnchoredDraggableDynamicAnchorsSample for an example of using dynamic anchors over confirmValueChange.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/SavedInSheet.kt:86:22 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/SongOptionsSheet.kt:100:22 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/SongOptionsSheet.kt:374:101 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/components/SupporterSheet.kt:100:49 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/ContextScreen.kt:1106:49 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Collator?'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/ContextScreen.kt:1107:50 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Collator?'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/ContextScreen.kt:1107:105 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Collator?'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/ContextScreen.kt:1108:49 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Collator?'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/ContextScreen.kt:1108:102 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Collator?'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/HomeScreen.kt:465:49 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/LibraryExtras.kt:446:81 'val Icons.Outlined.DriveFileMove: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.DriveFileMove.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/LibraryScreeen.kt:965:22 'fun rememberModalBottomSheetState(skipPartiallyExpanded: Boolean = ..., confirmValueChange: (SheetValue) -> Boolean = ...): SheetState' is deprecated. Use rememberBottomSheetState with Hidden initial value.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/PlayerScreen.kt:1102:9 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/PlayerScreen.kt:1453:45 'val Icons.Filled.KeyboardArrowRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.KeyboardArrowRight.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/PlayerScreen.kt:1475:50 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/PodcastPlayerScreen.kt:356:51 'val Icons.Filled.RotateLeft: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.RotateLeft.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/PodcastPlayerScreen.kt:356:81 'val Icons.Filled.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.RotateRight.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/QueueScreen.kt:149:24 'fun rememberSwipeToDismissBoxState(initialValue: SwipeToDismissBoxValue = ..., confirmValueChange: (SwipeToDismissBoxValue) -> Boolean = ..., positionalThreshold: (Float) -> Float = ...): SwipeToDismissBoxState' is deprecated. confirmValueChange is deprecated without replacement. Rather than relying on a callback to veto state changes, the anchor set should not include disallowed anchors. See androidx.compose.foundation.samples.AnchoredDraggableDynamicAnchorsSample for an example of using dynamic anchors over confirmValueChange.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/theme/Theme.kt:77:20 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/theme/Theme.kt:81:20 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/viewmodel/ArtistViewModel.kt:63:38 No cast needed.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/viewmodel/ArtistViewModel.kt:93:38 No cast needed.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/viewmodel/PlayerViewModel.kt:168:34 No cast needed.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/video/MusicVideoController.kt:389:36 Elvis operator (?:) always returns the left operand of non-nullable type 'RefinementFiles'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/video/RangeAudioDownload.kt:50:43 Elvis operator (?:) always returns the left operand of non-nullable type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/video/YouTubeSource.kt:95:27 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/video/YouTubeSource.kt:216:24 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/video/YouTubeSource.kt:246:24 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+
+> Task :app:compileDebugJavaWithJavac
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+
+> Task :app:compileDebugUnitTestKotlin
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/test/java/com/music/spotui/video/InterruptibleHttpTest.kt:29:86 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/app/src/test/java/com/music/spotui/video/InterruptibleHttpTest.kt:88:77 Java type mismatch: inferred type is 'CapturedType(out T)?', but 'T (of fun <T> tag)' was expected.
+
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugJavaRes
+> Task :app:processDebugUnitTestJavaRes
+> Task :host-android:bundleLibRuntimeToJarDebug
+> Task :host-android:processDebugJavaRes
+> Task :app:testDebugUnitTest
+> Task :host-android:compileDebugUnitTestKotlin
+> Task :host-android:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :host-android:processDebugUnitTestJavaRes
+> Task :host-android:testDebugUnitTest
+> Task :host-cdp:compileKotlin
+> Task :host-cdp:compileJava NO-SOURCE
+> Task :host-cdp:classes UP-TO-DATE
+> Task :host-cdp:jar
+
+> Task :host-cdp:compileTestKotlin
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-cdp/src/test/kotlin/app/myspoti/host/cdp/LiveDomainsTest.kt:215:20 Condition is always 'true'.
+
+> Task :host-cdp:compileTestJava NO-SOURCE
+> Task :host-cdp:testClasses UP-TO-DATE
+
+> Task :host-cdp:test
+
+LiveApiTest > search returns every kind in one round trip() SKIPPED
+
+LiveApiTest > catalog reads track, album and artist() SKIPPED
+
+LiveApiTest > playlists page through their tracks() SKIPPED
+
+LiveApiTest > library toggles a like and restores it() SKIPPED
+
+LiveApiTest > player plays, pauses, seeks and skips() SKIPPED
+
+LiveApiTest > queue adds and removes a track() SKIPPED
+
+LiveApiTest > volume is set and restored() SKIPPED
+
+LiveDomainsTest > podcasts shows and episodes() SKIPPED
+
+LiveDomainsTest > devices and jam() SKIPPED
+
+LiveDomainsTest > folders and playlists are created, edited and removed() SKIPPED
+
+LiveDomainsTest > home feed, filters and categories() SKIPPED
+
+LiveDomainsTest > raw access reaches untyped operations() SKIPPED
+
+LiveDomainsTest > users, profile, top content and history() SKIPPED
+
+LiveDomainsTest > search every tab and recent searches() SKIPPED
+
+LiveDomainsTest > library list, filters, liked songs and pins() SKIPPED
+
+LiveDomainsTest > artist pages beyond the overview() SKIPPED
+
+LiveDomainsTest > taste exclusion, playlist suggestions and player modes() SKIPPED
+
+LiveDomainsTest > lyrics, canvas, credits and radio() SKIPPED
+
+LiveDomainsTest > artist page, isrc and advanced queue() SKIPPED
+
+LiveEpisodeTest > an episode plays() SKIPPED
+
+LiveFeaturesTest > podcastsHome() SKIPPED
+
+LiveFeaturesTest > playlistAccessAndCover() SKIPPED
+
+LiveFeaturesTest > profilesAndRecents() SKIPPED
+
+LiveFeaturesTest > suggestionsAndSimilar() SKIPPED
+
+LiveFeaturesTest > artistBanRoundTrip() SKIPPED
+
+LiveFeaturesTest > episodeSaveRoundTrip() SKIPPED
+
+LiveOrderTest > plays recommendations inside a playlist order() SKIPPED
+
+LiveOrderTest > plays other songs inside liked songs() SKIPPED
+
+LiveOrderTest > plays a playlist in a given order() SKIPPED
+
+LivePlaythroughTest > plays song after song() SKIPPED
+
+> Task :api-spotify:test FAILED
+
+157 tests completed, 1 failed
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793610429085.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/spotifusion/spotifusion/base/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':api-spotify:test'.
+> There were failing tests. See the report at: file:///home/runner/work/spotifusion/spotifusion/base/api-spotify/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 2m 9s
+57 actionable tasks: 30 executed, 27 from cache
+Configuration cache entry stored.
