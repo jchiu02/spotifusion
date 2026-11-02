@@ -191,11 +191,16 @@ class PlaybackService : MediaBrowserServiceCompat() {
 
     /** Runs a system command on the app's player; a command with nobody to take it is logged, not lost silently. */
     private inline fun command(name: String, wake: Boolean = true, run: PlaybackControls.() -> Unit) {
-        Logbook.log("media session: $name")
+        // Who sent it (earbuds through Bluetooth, a watch, the car, the lock screen, another app):
+        // reported skips "nobody pressed" came in here, and the log could not say from where.
+        Logbook.log("media session: $name (from ${caller()})")
         if (wake) ensureStarted()
         val c = controls
         if (c == null) android.util.Log.w("Myspoti", "media session: $name dropped, the player is not attached yet") else c.run()
     }
+
+    /** The app or system part that sent the command now being handled, as far as Android says. */
+    private fun caller(): String = runCatching { session.currentControllerInfo?.packageName }.getOrNull() ?: "unknown"
 
     /** A transport command from the system: on a podcast episode the earbuds skip 15 s (see [HeadsetButtons]). */
     private fun headset(cmd: HeadsetButtons.Command) {
