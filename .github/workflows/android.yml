@@ -18,6 +18,8 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # a failed build's log is pushed to the ci-logs branch (read back by Claude)
     steps:
       - uses: actions/checkout@v7
 
@@ -35,11 +37,29 @@ jobs:
       # App unit tests, plus the JVM modules (API contracts, ad block, offline index, GraphQL
       # errors). The live tests in host-cdp skip themselves without a browser to drive.
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest :api:test :api-spotify:test :host-cdp:test
+        run: |
+          set -o pipefail
+          ./gradlew testDebugUnitTest :api:test :api-spotify:test :host-cdp:test 2>&1 | tee -a "$RUNNER_TEMP/build.log"
 
       - name: Debug APK
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-        run: ./gradlew assembleDebug
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug 2>&1 | tee -a "$RUNNER_TEMP/build.log"
+
+      # A failed build: its log (errors first) goes to the ci-logs branch, one file per commit.
+      - name: Publish the failure log
+        if: ${{ failure() && github.event_name == 'push' }}
+        run: |
+          log="$RUNNER_TEMP/build.log"
+          out="$RUNNER_TEMP/ci-logs"
+          git config --global user.name "ci"
+          git config --global user.email "ci@users.noreply.github.com"
+          git clone --depth 1 --branch ci-logs "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "$out" \
+            || { git init -q "$out"; git -C "$out" checkout -q -b ci-logs; git -C "$out" remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"; }
+          f="$out/${GITHUB_REF_NAME}-${GITHUB_SHA::7}.log"
+          { echo "== errors =="; grep -nE "^e: |error:|FAILED|What went wrong|Could not (find|resolve)|requires libraries|compile against version" "$log" | head -200; echo; echo "== tail =="; tail -n 300 "$log"; } > "$f"
+          git -C "$out" add -A && git -C "$out" commit -qm "build log ${GITHUB_SHA::7}" && git -C "$out" push -q origin ci-logs
 
       - uses: actions/upload-artifact@v7
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
