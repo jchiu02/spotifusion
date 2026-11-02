@@ -463,16 +463,16 @@ private fun PreloadDepthRow() {
                 .padding(top = 10.dp)
                 .horizontalScroll(rememberScrollState()),
         ) {
-            for (count in listOf(1, 2, 3, 5, 8, 10)) {
-                val selected = pref.preloadCount == count
+            for (minutes in listOf(30, 60, 120, 180, 240)) {
+                val selected = pref.preloadMinutes == minutes
                 Text(
-                    "$count ${if (count == 1) "track" else "tracks"}",
+                    if (minutes < 60) "$minutes min" else "${minutes / 60} h",
                     color = if (selected) Color.Black else Color.White, fontSize = 14.sp,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (selected) com.music.spotui.ui.theme.AppAccent else Color(0xFF282828))
-                        .clickable { pref.setCount(ctx, count) }
+                        .clickable { pref.setMinutes(ctx, minutes) }
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                 )
             }

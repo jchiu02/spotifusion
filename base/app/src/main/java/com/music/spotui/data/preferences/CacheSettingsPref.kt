@@ -8,7 +8,7 @@ import com.music.spotui.di.Graph
 
 private const val PREF = "cache_settings_prefs"
 private const val KEY_PRELOADING_ENABLED = "preloading_enabled"
-private const val KEY_PRELOAD_COUNT = "preload_count"
+private const val KEY_PRELOAD_MINUTES = "preload_minutes"
 private const val KEY_CACHE_CAP_MB = "cache_cap_mb"
 
 /** Preferences for proactive playback caching and queue preloading. */
@@ -18,7 +18,8 @@ object CacheSettingsPref {
     var preloadingEnabled by mutableStateOf(prefs(Graph.app).getBoolean(KEY_PRELOADING_ENABLED, true))
         private set
 
-    var preloadCount by mutableStateOf(prefs(Graph.app).getInt(KEY_PRELOAD_COUNT, 2).coerceIn(1, 10))
+    /** How much listening ahead is kept on the phone, in minutes (default: 2 hours). */
+    var preloadMinutes by mutableStateOf(prefs(Graph.app).getInt(KEY_PRELOAD_MINUTES, 120).coerceIn(15, 240))
         private set
 
     /** Cache cap in MB: 500, 1000, 2000, 5000, or 0 for Unlimited. Default: 1000 MB. */
@@ -30,10 +31,10 @@ object CacheSettingsPref {
         prefs(c).edit().putBoolean(KEY_PRELOADING_ENABLED, enabled).apply()
     }
 
-    fun setCount(c: Context, count: Int) {
-        val v = count.coerceIn(1, 10)
-        preloadCount = v
-        prefs(c).edit().putInt(KEY_PRELOAD_COUNT, v).apply()
+    fun setMinutes(c: Context, minutes: Int) {
+        val v = minutes.coerceIn(15, 240)
+        preloadMinutes = v
+        prefs(c).edit().putInt(KEY_PRELOAD_MINUTES, v).apply()
     }
 
     fun setCapMb(c: Context, capMb: Int) {

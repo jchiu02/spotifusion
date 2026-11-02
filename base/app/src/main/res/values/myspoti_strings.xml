@@ -428,9 +428,9 @@
     <string name="offline_stats_warning_dont_show">Don\'t show again</string>
     <string name="settings_section_caching">Playback Caching</string>
     <string name="settings_preloading_title">Queue Preloading</string>
-    <string name="settings_preloading_detail">Proactively downloads upcoming tracks in the background for gapless playback during network dropouts.</string>
-    <string name="settings_preload_depth_title">Preload Depth</string>
-    <string name="settings_preload_depth_detail">Number of upcoming queue tracks to keep pre-cached.</string>
+    <string name="settings_preloading_detail">Keeps the song playing and the songs coming up next in the list on this phone, so music goes on with no signal (the Tube). Uses data: about 100 MB an hour of music.</string>
+    <string name="settings_preload_depth_title">Keep ahead</string>
+    <string name="settings_preload_depth_detail">How much listening after the current song is kept on the phone.</string>
     <string name="settings_cache_cap_title">Cache Storage Cap</string>
     <string name="settings_cache_cap_detail">Maximum local storage allocated for playback caching.</string>
     <string name="settings_clear_cache_title">Clear Playback Cache</string>

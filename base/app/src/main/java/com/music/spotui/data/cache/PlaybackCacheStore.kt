@@ -187,13 +187,14 @@ object PlaybackCacheStore {
         saveIndex()
     }
 
-    fun enforceCap(maxCapBytes: Long) {
+    fun enforceCap(maxCapBytes: Long, keep: Set<String> = emptySet()) {
         if (maxCapBytes <= 0) return // 0 = unlimited
         var currentSize = totalBytes()
         if (currentSize <= maxCapBytes) return
 
-        // Purge oldest cached tracks (LRU based on lastPlayedAt / cachedAt)
-        val sorted = synchronized(lock) { cachedTracks.values.sortedBy { it.lastPlayedAt } }
+        // Purge oldest cached tracks (LRU based on lastPlayedAt / cachedAt), never the ones [keep]
+        // names (the song playing and the ones coming up).
+        val sorted = synchronized(lock) { cachedTracks.values.filter { it.trackId !in keep }.sortedBy { it.lastPlayedAt } }
         for (t in sorted) {
             if (currentSize <= maxCapBytes) break
             removeTrack(t.trackId)

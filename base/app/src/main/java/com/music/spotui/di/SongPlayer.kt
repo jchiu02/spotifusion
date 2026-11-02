@@ -144,7 +144,10 @@ object SongPlayer {
             if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return@postDelayed
             if (LocalPlayer.active.value || !playing || _activeDevice.value != null || adState.value) return@postDelayed
             val q = _queue.value
-            val ids = (listOf(currentTrackId) + q.queued.map { it.song.spotifyTrackId } + q.nextUp.map { it.song.spotifyTrackId })
+            // The whole list ahead as the preloader planned it (the playlist, not only Spotify's
+            // few queued songs), when it starts from the song playing.
+            val planned = QueuePreloader.plan.takeIf { it.firstOrNull() == currentTrackId }
+            val ids = (planned ?: (listOf(currentTrackId) + q.queued.map { it.song.spotifyTrackId } + q.nextUp.map { it.song.spotifyTrackId }))
                 .filter { it.isNotBlank() }.distinct()
             val kept = ids.mapNotNull { id ->
                 val local = com.music.spotui.data.offline.OfflineStore.tracks[id]?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
