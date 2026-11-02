@@ -214,6 +214,7 @@ class WebPlayerHost(private val context: Context) : BridgeHost {
                 if (allowed.isNotEmpty()) request.grant(allowed.toTypedArray()) else request.deny()
             }
         }
+        val liteBlocked = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
         webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
                 val url = request.url.toString()
@@ -238,6 +239,13 @@ class WebPlayerHost(private val context: Context) : BridgeHost {
                 if (url.startsWith("https://accounts.spotify.com/")) {
                     loginSteps++
                     Logbook.log("login step #$loginSteps ${request.method} ${url.substringAfter("accounts.spotify.com").substringBefore('?').take(90)}")
+                }
+                // Lite page: the app draws every screen itself, so the hidden page only has to play.
+                // Its pictures, Canvas videos, web fonts and tracking are not fetched (less memory
+                // and CPU, so Android leaves the page alone in the background). Never the audio.
+                if (!media.handles(url)) LitePage.blocked(url, request.requestHeaders["Accept"])?.let { kind ->
+                    if (liteBlocked.add(kind)) Logbook.log("lite page: $kind not loaded (first: ${Logbook.noQuery(url).take(100)})")
+                    return WebResourceResponse("text/plain", "utf-8", 204, "No Content", emptyMap(), ByteArrayInputStream(ByteArray(0)))
                 }
                 // The music itself: fetched here, so the WebView's own package-name header never
                 // travels with it (see MediaProxy).
