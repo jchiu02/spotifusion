@@ -350,8 +350,15 @@ object SongPlayer {
         SpeakerKeepAlive.set(playing && _activeDevice.value == null)
         durationMs = item?.durationMs ?: 0L
         val reported = s.positionAt(System.currentTimeMillis())
+        // Just after a seek the page can still report where it was (it is fetching the new spot):
+        // the bar stays where the user put it, and only a report that agrees with it ends the hold.
+        val holdingSeek = seekHeldUntil > SystemClock.elapsedRealtime() && uri == seekHeldUri
+        if (holdingSeek && kotlin.math.abs(reported - predicted) < SEEK_MATCH_MS) seekHeldUntil = 0L
+        else if (!holdingSeek) seekHeldUntil = 0L
         // Keep the running clock when the player only nudges it (< 1 s).
-        if (!(wasPlaying && playing && !wasBuffering && !isBuffering && kotlin.math.abs(reported - predicted) < 1000)) {
+        if (holdingSeek && seekHeldUntil != 0L) {
+            // Ignored: a report from before the seek.
+        } else if (!(wasPlaying && playing && !wasBuffering && !isBuffering && kotlin.math.abs(reported - predicted) < 1000)) {
             positionMs = reported
             positionAt = SystemClock.elapsedRealtime()
         }
@@ -1007,10 +1014,18 @@ object SongPlayer {
         next()
     }
 
+    // A seek sent and not yet confirmed by the page: the bar holds the spot asked for meanwhile.
+    @Volatile private var seekHeldUntil = 0L
+    @Volatile private var seekHeldUri = ""
+    private const val SEEK_HOLD_MS = 2_500L
+    private const val SEEK_MATCH_MS = 1_500L
+
     fun seekTo(ms: Long) {
         if (LocalPlayer.active.value) { LocalPlayer.seekTo(ms); return }
         positionMs = ms
         positionAt = SystemClock.elapsedRealtime()
+        seekHeldUri = _nowPlaying.value.uri
+        seekHeldUntil = SystemClock.elapsedRealtime() + SEEK_HOLD_MS
         command { api.player.seek(ms) }
     }
 
