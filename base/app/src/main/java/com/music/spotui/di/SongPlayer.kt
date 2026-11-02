@@ -135,7 +135,7 @@ object SongPlayer {
     private const val AUTO_RESUME_WINDOW_MS = 60_000L
 
     private fun checkUnaskedPause(s: PlayerState) {
-        val item = s.item ?: return
+        val item = s.item ?: run { checkNothingPlays(); return }
         if (!s.isPaused || !userWantsPlaying || autoResumeQueued) return
         if (item.kind != app.myspoti.api.ItemKind.TRACK && item.kind != app.myspoti.api.ItemKind.EPISODE) return
         // The end of the list: nothing to go on with.
@@ -168,6 +168,37 @@ object SongPlayer {
             transport { api.player.resume() }
         }, AUTO_RESUME_CHECK_MS)
     }
+
+    /**
+     * The page reports nothing at all while the user wants music: seen after a reload that got past
+     * an ad ("ad break over: nothing", the session left without a song). The song is played again
+     * where it was, once, a few seconds later; Spotify refusing it brings the YouTube Music
+     * fallback ([playFallbackWithBitChord]) through the refusal path.
+     */
+    private fun checkNothingPlays() {
+        if (!userWantsPlaying || autoResumeQueued) return
+        val trackId = currentTrackId.takeIf { it.isNotBlank() } ?: return
+        val ctx = currentContextUri
+        val at = getCurrentPosition()
+        autoResumeQueued = true
+        main.postDelayed({
+            autoResumeQueued = false
+            val st = api.player.state.value
+            if (st?.item != null || !userWantsPlaying || LocalPlayer.active.value || adState.value || _activeDevice.value != null) return@postDelayed
+            if (currentTrackId != trackId) return@postDelayed
+            val now = SystemClock.elapsedRealtime()
+            autoResumes.removeAll { now - it > AUTO_RESUME_WINDOW_MS }
+            if (autoResumes.size >= AUTO_RESUME_MAX) return@postDelayed
+            autoResumes += now
+            app.myspoti.host.android.Logbook.log("nothing plays though music was playing: playing the song again at ${at / 1000}s")
+            wantPlayingUntil = now + 4000
+            transport {
+                if (ctx.isNotBlank()) api.player.play(ctx, trackUri = SPOTIFY_TRACK_PREFIX + trackId, positionMs = at)
+                else api.player.play(SPOTIFY_TRACK_PREFIX + trackId, positionMs = at)
+            }
+        }, NOTHING_PLAYS_CHECK_MS)
+    }
+    private const val NOTHING_PLAYS_CHECK_MS = 4_000L
 
     // ── Signal lost (the Tube): the list goes on from the songs kept on this phone ──
     private const val OFFLINE_SWITCH_CHECK_MS = 3_000L

@@ -121,6 +121,8 @@ object Logbook {
     /** The lines the 402 analyses read: refusals, the matrix, registration, clusters, licences, routes, ads. */
     private val RELEVANT_402 = Regex("""(?i)refus|\b402\b|registration|cluster:|licence|command headers|commands from the page|relay route|relay: |audio after|ad break|page ready|connect/transfer|previous player device""")
     private const val RELEVANT_LINES = 50
+    /** Lines in the report's first section (newest first). */
+    private const val LATEST_LINES = 70
 
     /** An age in coarse buckets: never a date. */
     internal fun ageBucket(ms: Long): String {
@@ -167,6 +169,11 @@ object Logbook {
         // Masked and cut down (DiagnosticDigest): small enough to paste, nothing that opens an account.
         return buildString {
             appendLine("Myspoti diagnostic report")
+            // A pasted report is cut at about 20 KB: the moment it was exported for (the last
+            // minutes) comes first, newest line on top, so the cut takes the old part instead.
+            appendLine("--- latest (newest first) ---")
+            tail.takeLast(LATEST_LINES).asReversed().forEach { appendLine(app.myspoti.spotify.report.DiagnosticDigest.mask(it).take(220)) }
+            appendLine()
             // The 402 questions answered in one screen (Refusal402), before anything else.
             appendLine("--- 402 summary ---")
             summary.forEach { (k, v) -> appendLine("${k.padEnd(12)}: ${app.myspoti.spotify.report.DiagnosticDigest.mask(v)}") }
