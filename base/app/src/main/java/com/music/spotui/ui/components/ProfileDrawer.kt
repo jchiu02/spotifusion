@@ -247,52 +247,6 @@ fun ProfileDrawerContent(
                 )
             }
 
-            // ── 4. Updates ──
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showAbout = true }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-            ) {
-                DrawerMegaphoneIcon(Modifier.size(24.dp))
-                Spacer(Modifier.width(16.dp))
-                Text(
-                    text = "Updates",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                )
-            }
-
-            // ── 5. Report bugs ──
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        ProfileDrawerState.close()
-                        runCatching {
-                            context.startActivity(
-                                android.content.Intent(
-                                    android.content.Intent.ACTION_VIEW,
-                                    android.net.Uri.parse("https://forms.gle/CLNqCznseJwVqg1Q7"),
-                                ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                            )
-                        }
-                    }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-            ) {
-                DrawerBugIcon(Modifier.size(24.dp))
-                Spacer(Modifier.width(16.dp))
-                Text(
-                    text = "Report bugs",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                )
-            }
-
             // ── 6. Settings and privacy ──
             Row(
                 verticalAlignment = Alignment.CenterVertically,

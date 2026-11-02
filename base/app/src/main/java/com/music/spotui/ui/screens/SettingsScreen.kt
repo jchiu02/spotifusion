@@ -142,14 +142,6 @@ fun SettingsScreen(navController: NavController) {
             Divider()
 
             Section(R.string.settings_section_app)
-            // A18: the launch check can be turned off; the manual check below keeps working.
-            OptionRow(
-                label = stringResource(R.string.settings_auto_update_title),
-                detail = stringResource(R.string.settings_auto_update_detail),
-                checked = com.music.spotui.data.preferences.AutoUpdateCheckPref.on,
-                onChecked = { com.music.spotui.data.preferences.AutoUpdateCheckPref.set(ctx, it) },
-            )
-            CheckUpdateRow()
             // The hidden Web Player stuck or crashed: rebuild it without leaving the app.
             Column(
                 Modifier.fillMaxWidth().clickable { app.myspoti.host.android.MyspotiRuntime.host.reload() }
