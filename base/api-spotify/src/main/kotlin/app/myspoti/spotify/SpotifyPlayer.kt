@@ -1517,6 +1517,10 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         // put-back of an earlier ad skip would queue that old song after the pick.
         adRestore?.cancel()
         app.myspoti.spotify.bridge.AdBlock.ahead.value = null
+        // The pick is the newest thing the user wants: skips held during an ad or a reload (and
+        // replayed after it, seconds later) and a pick waiting for a reloaded page are dropped.
+        intent = null
+        pickAfterReload = null
         // Held whether or not the song comes with its place in the list (SongPlayer.rowIndex).
         if (_adPlaying.value) {
             if (trackUri == null || trackUri != liveIntent()?.item?.uri) intent = null

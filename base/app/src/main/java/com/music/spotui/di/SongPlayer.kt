@@ -744,6 +744,11 @@ object SongPlayer {
         val ctx = contextUri ?: if (standalone) null else contextRegistry[song]
         userWantsPlaying = true
         userMovedAt = SystemClock.elapsedRealtime()
+        // "Next" taps of a burst still waiting to be sent: the pick replaces them (they used to
+        // land after it and skip away from the song just chosen).
+        main.removeCallbacks(sendSkips)
+        pendingSkips = 0
+        burstAt = 0L
         lastRequestedSongKey = song
         lastRequestedContextUri = ctx.orEmpty()
         markPending(if (episodeId != null) "" else trackId, itemUri)
@@ -765,6 +770,20 @@ object SongPlayer {
      * BitChord audio engine ([OfflineStore] / [com.music.spotui.data.offline.OfflineDownloader.fetchFallbackAudioFile])
      * and play via [LocalPlayer] so the user's song still plays seamlessly.
      */
+    /** A direct audio stream of the song on YouTube Music (best M4A / Opus), or null. */
+    private suspend fun streamFallback(title: String, artist: String, durMs: Long): String? =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                val hit = com.music.spotui.video.YouTubeSource.findSong(title, artist, durMs)
+                    ?: com.music.spotui.video.YouTubeSource.findAudio(title, artist, durMs)
+                    ?: return@runCatching null
+                com.music.spotui.video.YouTubeSource.info(hit.url).audioStreams
+                    .filter { it.format == org.schabi.newpipe.extractor.MediaFormat.M4A || it.format == org.schabi.newpipe.extractor.MediaFormat.WEBMA_OPUS }
+                    .sortedWith(compareBy({ if (it.format == org.schabi.newpipe.extractor.MediaFormat.M4A) 0 else 1 }, { -it.averageBitrate }))
+                    .firstOrNull()?.content
+            }.onFailure { Log.w(TAG, "fallback stream not found: ${it.message}") }.getOrNull()
+        }
+
     private fun playFallbackWithBitChord(fallbackToastRes: Int, explicitTrackId: String? = null) {
         val st = boundState
         val trackId = (explicitTrackId ?: pendingTrackId ?: currentTrackId.takeIf { it.isNotBlank() }
@@ -802,7 +821,20 @@ object SongPlayer {
                     com.music.spotui.data.offline.OfflineStore.toLocalTrack(dl)
                 } else if (cached != null && com.music.spotui.data.cache.PlaybackCacheStore.isCached(trackId)) {
                     com.music.spotui.data.cache.PlaybackCacheStore.toLocalTrack(cached)
-                } else {
+                } else streamFallback(title, singer, durMs)?.let { url ->
+                    // Played while it streams: the song starts in a second or two instead of
+                    // waiting for the whole file (what made the fallback feel stuck).
+                    Log.i(TAG, "fallback: streaming $title from YouTube Music")
+                    com.music.spotui.data.local.LocalTrack(
+                        id = com.music.spotui.data.offline.OfflineStore.localIdOf(dedupKey),
+                        uri = android.net.Uri.parse(url),
+                        title = title,
+                        artist = singer,
+                        album = album,
+                        durationMs = durMs,
+                        artUri = android.net.Uri.parse(coverUri),
+                    )
+                } ?: run {
                     val file = com.music.spotui.data.offline.OfflineDownloader.fetchFallbackAudioFile(
                         trackId = dedupKey,
                         title = title,
