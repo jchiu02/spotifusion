@@ -46,7 +46,9 @@ object QueuePreloader {
                 val current = eq.current
                 // The song playing first and at once: should the signal go, it goes on from the
                 // phone instead of the music switching to a song further down.
-                if (current != null && current.spotifyTrackId == SongPlayer.currentTrackId) PlaybackCacheManager.preloadTracks(listOf(current))
+                // (Not compared with the id the player reports: Spotify often plays another copy of
+                // the same song, a relinked id, and the song playing was then never saved first.)
+                if (current != null && current.spotifyTrackId.isNotBlank()) PlaybackCacheManager.preloadTracks(listOf(current))
                 kotlinx.coroutines.delay(1_000) // a skip burst settles first
                 val upcoming = listOfNotNull(current) + eq.queued.map { it.song } + eq.nextUp.map { it.song }
                 val rest = if (ctx.startsWith("spotify:playlist:")) {
@@ -65,6 +67,10 @@ object QueuePreloader {
     /** Track ids in the order they will play: the song playing first. Used when the signal goes. */
     @Volatile var plan: List<String> = emptyList()
         private set
+
+    /** Whether [contextUri]'s fetched songs have one named [title] (another copy of a song plays under another id). */
+    fun playlistHasTitle(contextUri: String, title: String): Boolean =
+        contextUri.substringAfterLast(':') == listFor && listSongs.any { it.title.equals(title, ignoreCase = true) }
 
     /** The track ids of [contextUri] in its own order, when that playlist's songs were fetched. */
     fun playlistIds(contextUri: String): List<String>? =

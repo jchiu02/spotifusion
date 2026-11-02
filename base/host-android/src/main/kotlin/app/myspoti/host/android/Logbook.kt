@@ -123,6 +123,7 @@ object Logbook {
     private const val RELEVANT_LINES = 50
     /** The commit the app was built from, set by the app at start (its BuildConfig). */
     @Volatile var buildId: String? = null
+    private val ROUTINE_READ = Regex("""call #\d+ (player\.(state|queue)|volume\.get|media\.(state|read))\b""")
     /** Lines in the report's first section (newest first). */
     private const val LATEST_LINES = 70
 
@@ -174,7 +175,8 @@ object Logbook {
             // A pasted report is cut at about 20 KB: the moment it was exported for (the last
             // minutes) comes first, newest line on top, so the cut takes the old part instead.
             appendLine("--- latest (newest first) ---")
-            tail.takeLast(LATEST_LINES).asReversed().forEach { appendLine(app.myspoti.spotify.report.DiagnosticDigest.mask(it).take(220)) }
+            // The every-3 s state and queue reads say nothing new: left out so the lines that matter fit.
+            tail.filterNot { ROUTINE_READ.containsMatchIn(it) }.takeLast(LATEST_LINES).asReversed().forEach { appendLine(app.myspoti.spotify.report.DiagnosticDigest.mask(it).take(220)) }
             appendLine()
             // The 402 questions answered in one screen (Refusal402), before anything else.
             appendLine("--- 402 summary ---")

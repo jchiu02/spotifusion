@@ -132,6 +132,9 @@ object SongPlayer {
         }
         val ids = QueuePreloader.playlistIds(ctx) ?: return
         if (newId in ids) return
+        // Another copy of a listed song (a relinked id) is that song, not one from outside.
+        if (_queue.value.current?.spotifyTrackId?.let { it in ids } == true) return
+        if (QueuePreloader.playlistHasTitle(ctx, item.name)) return
         val at = ids.indexOf(prevId)
         // The playlist's last song: what comes after it is autoplay (Settings), not this guard's.
         if (at < 0 || at >= ids.lastIndex) return
@@ -247,10 +250,13 @@ object SongPlayer {
         val tick = object : Runnable {
             override fun run() {
                 if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) { app.myspoti.host.android.Logbook.log("signal back: Spotify goes on"); return }
-                if (LocalPlayer.active.value || currentTrackId != trackId || !userWantsPlaying) return
+                if (LocalPlayer.active.value || trackId !in currentIds() || !userWantsPlaying) return
                 if (SystemClock.elapsedRealtime() - started > FOLLOW_MAX_MS) return
                 val now = SystemClock.elapsedRealtime()
-                stuckSince = if (isBuffering) (if (stuckSince == 0L) now else stuckSince) else 0L
+                // Offline the page can go on saying "playing, not buffering" while nothing is heard:
+                // the player's stall flag (its media element standing still) counts as well.
+                val silent = isBuffering || (MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.stalled.value)
+                stuckSince = if (silent) (if (stuckSince == 0L) now else stuckSince) else 0L
                 val atEnd = durationMs > 0 && getCurrentPosition() >= durationMs - 1_000
                 if (atEnd || (stuckSince != 0L && now - stuckSince >= FOLLOW_STUCK_MS)) {
                     app.myspoti.host.android.Logbook.log("offline: ${if (atEnd) "the song ended" else "Spotify's buffer ran out"}: the saved songs after it play from this phone")
@@ -273,8 +279,9 @@ object SongPlayer {
             val q = _queue.value
             // The whole list ahead as the preloader planned it (the playlist, not only Spotify's
             // few queued songs), when it starts from the song playing.
-            val planned = QueuePreloader.plan.takeIf { it.firstOrNull() == currentTrackId }
-            val ids = (planned ?: (listOf(currentTrackId) + q.queued.map { it.song.spotifyTrackId } + q.nextUp.map { it.song.spotifyTrackId }))
+            val ids0 = currentIds()
+            val planned = QueuePreloader.plan.takeIf { it.firstOrNull() in ids0 }
+            val ids = (planned ?: (listOfNotNull(q.current?.spotifyTrackId?.takeIf { it.isNotBlank() } ?: currentTrackId) + q.queued.map { it.song.spotifyTrackId } + q.nextUp.map { it.song.spotifyTrackId }))
                 .filter { it.isNotBlank() }.distinct()
             val kept = ids.mapNotNull { id ->
                 val local = com.music.spotui.data.offline.OfflineStore.tracks[id]?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
@@ -284,7 +291,7 @@ object SongPlayer {
             // Only when the song playing is itself on the phone: it goes on from where it is.
             // Reported: with it not saved yet, the first saved song further down played instead,
             // a "random" switch in the middle of a song after a blip of mobile signal.
-            if (kept.firstOrNull()?.first != currentTrackId) {
+            if (kept.firstOrNull()?.first !in ids0) {
                 if (kept.isEmpty()) { app.myspoti.host.android.Logbook.log("signal lost: none of the songs ahead are on this phone"); return }
                 app.myspoti.host.android.Logbook.log("signal lost: the song playing is not on this phone: it plays on from Spotify's buffer, then ${kept.size} saved songs follow")
                 followAfterBuffer(currentTrackId, kept.map { it.second })
@@ -1047,8 +1054,17 @@ object SongPlayer {
     fun isNowPlaying(trackId: String): Boolean {
         if (trackId.isBlank()) return false
         val uri = _nowPlaying.value.uri
-        return if (uri.isNotBlank()) uri == SPOTIFY_TRACK_PREFIX + trackId else currentTrackId == trackId
+        return (if (uri.isNotBlank()) uri == SPOTIFY_TRACK_PREFIX + trackId else currentTrackId == trackId) ||
+            _queue.value.current?.spotifyTrackId == trackId
     }
+
+    /**
+     * The ids the song playing goes by: the one the player reports and the one its list has.
+     * Spotify often plays another copy of a listed song (a relinked id: same song, another
+     * release or market), so the two differ (seen: In The Fire, two ids at once).
+     */
+    private fun currentIds(): Set<String> =
+        setOfNotNull(currentTrackId.takeIf { it.isNotBlank() }, _queue.value.current?.spotifyTrackId?.takeIf { it.isNotBlank() })
 
     private fun pauseSilently() {
         if (LocalPlayer.active.value) { LocalPlayer.pause(); return }
