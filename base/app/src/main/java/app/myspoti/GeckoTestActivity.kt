@@ -57,15 +57,29 @@ class GeckoTestActivity : Activity() {
         super.onCreate(savedInstanceState)
         val root = FrameLayout(this)
         val view = GeckoView(this)
+        // A TextureView, not the default SurfaceView: it draws inside the window like any view,
+        // so the status lines over it always show (a SurfaceView left only a white screen).
+        runCatching { view.setViewBackend(GeckoView.BACKEND_TEXTURE_VIEW) }
         val status = TextView(this).apply {
             setTextColor(0xFFFFFFFF.toInt())
-            setBackgroundColor(0xAA000000.toInt())
+            setBackgroundColor(0xEE000000.toInt())
             textSize = 12f
-            setPadding(16, 8, 16, 8)
-            text = "Firefox engine test: loading…"
+            setPadding(24, 48, 24, 16)
+            elevation = 100f
         }
+        val started = android.os.SystemClock.elapsedRealtime()
+        val lines = ArrayList<String>()
+        fun say(line: String) = runOnUiThread {
+            val t = (android.os.SystemClock.elapsedRealtime() - started) / 1000
+            lines += "[${t}s] $line"
+            while (lines.size > 12) lines.removeAt(0)
+            status.text = "Firefox engine test\n" + lines.joinToString("\n")
+            Log.i(TAG, line)
+        }
+        say("starting Firefox engine…")
         root.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         root.addView(status, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+        status.bringToFront()
         setContentView(root)
 
         val s = GeckoSession(
@@ -85,21 +99,43 @@ class GeckoTestActivity : Activity() {
             }
         }
         s.progressDelegate = object : GeckoSession.ProgressDelegate {
+            override fun onPageStart(session: GeckoSession, url: String) { say("page start: ${url.take(60)}") }
+            override fun onProgressChange(session: GeckoSession, progress: Int) {
+                if (progress % 25 == 0 || progress == 100) say("loading $progress%")
+            }
             override fun onPageStop(session: GeckoSession, success: Boolean) {
-                status.text = if (success) "Firefox engine test: page loaded. Sign in, then play a song." else "Firefox engine test: page failed to load"
+                say(if (success) "page loaded. Sign in, then play a song." else "page FAILED to load")
+            }
+        }
+        s.contentDelegate = object : GeckoSession.ContentDelegate {
+            override fun onFirstComposite(session: GeckoSession) { say("first frame drawn") }
+            override fun onFirstContentfulPaint(session: GeckoSession) { say("page content drawn") }
+            override fun onCrash(session: GeckoSession) { say("CONTENT PROCESS CRASHED") }
+            override fun onKill(session: GeckoSession) { say("content process killed by Android") }
+        }
+        s.navigationDelegate = object : GeckoSession.NavigationDelegate {
+            override fun onLoadError(session: GeckoSession, uri: String?, error: org.mozilla.geckoview.WebRequestError): GeckoResult<String>? {
+                say("LOAD ERROR category=${error.category} code=${error.code} on ${uri?.take(60)}")
+                return null
             }
         }
         s.mediaSessionDelegate = object : org.mozilla.geckoview.MediaSession.Delegate {
             override fun onPlay(session: GeckoSession, mediaSession: org.mozilla.geckoview.MediaSession) {
-                status.text = "Firefox engine test: PLAYING. If you hear it, the Firefox player works on this phone."
+                say("PLAYING. If you hear it, the Firefox player works on this phone.")
             }
             override fun onPause(session: GeckoSession, mediaSession: org.mozilla.geckoview.MediaSession) {
-                status.text = "Firefox engine test: paused"
+                say("paused")
             }
         }
-        s.open(runtime(this))
+        val rt = try { runtime(this) } catch (t: Throwable) {
+            say("engine failed to start: ${t.javaClass.simpleName}: ${t.message?.take(120)}")
+            return
+        }
+        say("engine started (${android.os.Build.SUPPORTED_ABIS.firstOrNull()})")
+        s.open(rt)
         view.setSession(s)
         s.loadUri("https://open.spotify.com/")
+        say("opening open.spotify.com…")
         session = s
     }
 
