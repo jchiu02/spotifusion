@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Spotifock launcher mark: a stars-and-stripes trucker cap with headphones (adaptive-icon safe zone). -->
+<!-- Spotifock launcher mark: five equaliser bars striped red and white, under three stars (adaptive-icon safe zone). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:pathData="M30,66 C28,44 36,30 54,30 C72,30 80,44 78,66" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="5.5" android:strokeLineCap="round" />
-    <path android:pathData="M33,58 C33,42 41,33 54,32 C67,33 75,42 75,58 Z" android:fillColor="#FFFFFFFF" />
-    <path android:pathData="M41,58 C41,43 46,34 54,33 C62,34 67,43 67,58 Z" android:fillColor="#FFFFFFFF" />
-    <path android:pathData="M54.00,40.80 L55.53,44.90 L59.90,45.08 L56.47,47.80 L57.64,52.02 L54.00,49.60 L50.36,52.02 L51.53,47.80 L48.10,45.08 L52.47,44.90 Z" android:fillColor="#FFFFFFFF" />
-    <path android:pathData="M51.5,32.5 a2.5,2.5 0 1 0 5,0 a2.5,2.5 0 1 0 -5,0 z" android:fillColor="#FFFFFFFF" />
-    <path android:pathData="M27,59 Q54,51 81,59 Q83,64 79,66 Q54,59 29,66 Q25,64 27,59 Z" android:fillColor="#FFFFFFFF" />
-    <path android:pathData="M24,63 h8 a3,3 0 0 1 3,3 v12 a3,3 0 0 1 -3,3 h-8 a3,3 0 0 1 -3,-3 v-12 a3,3 0 0 1 3,-3 z" android:fillColor="#FFFFFFFF" />
-    <path android:pathData="M76,63 h8 a3,3 0 0 1 3,3 v12 a3,3 0 0 1 -3,3 h-8 a3,3 0 0 1 -3,-3 v-12 a3,3 0 0 1 3,-3 z" android:fillColor="#FFFFFFFF" />
+    <path android:pathData="M34.0,46.0 h0.0 a3.5,3.5 0 0 1 3.5,3.5 v9.0 a3.5,3.5 0 0 1 -3.5,3.5 h-0.0 a3.5,3.5 0 0 1 -3.5,-3.5 v-9.0 a3.5,3.5 0 0 1 3.5,-3.5 z M44.5,39.0 h0.0 a3.5,3.5 0 0 1 3.5,3.5 v23.0 a3.5,3.5 0 0 1 -3.5,3.5 h-0.0 a3.5,3.5 0 0 1 -3.5,-3.5 v-23.0 a3.5,3.5 0 0 1 3.5,-3.5 z M55.0,34.0 h0.0 a3.5,3.5 0 0 1 3.5,3.5 v33.0 a3.5,3.5 0 0 1 -3.5,3.5 h-0.0 a3.5,3.5 0 0 1 -3.5,-3.5 v-33.0 a3.5,3.5 0 0 1 3.5,-3.5 z M65.5,41.0 h0.0 a3.5,3.5 0 0 1 3.5,3.5 v19.0 a3.5,3.5 0 0 1 -3.5,3.5 h-0.0 a3.5,3.5 0 0 1 -3.5,-3.5 v-19.0 a3.5,3.5 0 0 1 3.5,-3.5 z M76.0,47.0 h0.0 a3.5,3.5 0 0 1 3.5,3.5 v7.0 a3.5,3.5 0 0 1 -3.5,3.5 h-0.0 a3.5,3.5 0 0 1 -3.5,-3.5 v-7.0 a3.5,3.5 0 0 1 3.5,-3.5 z M42.00,24.30 L42.79,26.41 L45.04,26.51 L43.28,27.92 L43.88,30.09 L42.00,28.84 L40.12,30.09 L40.72,27.92 L38.96,26.51 L41.21,26.41 Z M54.00,20.80 L54.79,22.91 L57.04,23.01 L55.28,24.42 L55.88,26.59 L54.00,25.34 L52.12,26.59 L52.72,24.42 L50.96,23.01 L53.21,22.91 Z M66.00,24.30 L66.79,26.41 L69.04,26.51 L67.28,27.92 L67.88,30.09 L66.00,28.84 L64.12,30.09 L64.72,27.92 L62.96,26.51 L65.21,26.41 Z" android:fillColor="#FFFFFFFF" />
 </vector>
