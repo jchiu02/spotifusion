@@ -906,6 +906,17 @@ object SongPlayer {
 
     fun pause() { Haptics.click(); pauseSilently() }
 
+    /**
+     * Whether [trackId] is the song playing now (by its Spotify id, not the list position the
+     * screens used to compare, which marked nothing in search results). Read in composition, so
+     * a row turns green as soon as the song starts.
+     */
+    fun isNowPlaying(trackId: String): Boolean {
+        if (trackId.isBlank()) return false
+        val uri = _nowPlaying.value.uri
+        return if (uri.isNotBlank()) uri == SPOTIFY_TRACK_PREFIX + trackId else currentTrackId == trackId
+    }
+
     private fun pauseSilently() {
         if (LocalPlayer.active.value) { LocalPlayer.pause(); return }
         intendPaused()

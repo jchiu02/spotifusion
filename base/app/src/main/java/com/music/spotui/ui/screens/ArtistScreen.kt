@@ -682,7 +682,7 @@ private fun PopularTrackRow(
 ) {
     val song = item.song
     val titleColor =
-        if (song.id == artistViewModel.currentSongId.value) SpotifyGreen else Color.White
+        if (com.music.spotui.di.SongPlayer.isNowPlaying(song.spotifyTrackId) || (song.spotifyTrackId.isBlank() && song.id == artistViewModel.currentSongId.value)) SpotifyGreen else Color.White
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
