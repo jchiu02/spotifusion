@@ -118,7 +118,7 @@ object SongPlayer {
         } else ids.drop(at + 1).firstOrNull { it.isNotBlank() }
         next ?: return
         offListFixedAt = now
-        Log.w(TAG, "${item.name} is not in the playlist and nobody picked it: playing the playlist's next song ($next) instead")
+        app.myspoti.host.android.Logbook.log("${item.name} is not in the playlist and nobody picked it: playing the playlist's next song ($next) instead")
         transport { api.player.play(ctx, trackUri = SPOTIFY_TRACK_PREFIX + next) }
     }
     private fun intendPaused() { wantPausedUntil = SystemClock.elapsedRealtime() + 1500; wantPlayingUntil = 0; userWantsPlaying = false }
@@ -157,12 +157,12 @@ object SongPlayer {
             val now = SystemClock.elapsedRealtime()
             autoResumes.removeAll { now - it > AUTO_RESUME_WINDOW_MS }
             if (autoResumes.size >= AUTO_RESUME_MAX) {
-                Log.w(TAG, "paused again after $AUTO_RESUME_MAX resumes in a minute: left paused")
+                app.myspoti.host.android.Logbook.log("paused again after $AUTO_RESUME_MAX resumes in a minute: left paused")
                 userWantsPlaying = false
                 return@postDelayed
             }
             autoResumes += now
-            Log.i(TAG, "paused without being asked (${st.item?.name}): resuming")
+            app.myspoti.host.android.Logbook.log("paused without being asked (${st.item?.name}): resuming")
             wantPlayingUntil = now + 4000
             playing = true; positionAt = now
             transport { api.player.resume() }
@@ -174,10 +174,18 @@ object SongPlayer {
 
     /** Called when the phone's network goes away. */
     fun onNetworkLost() {
+        // Still offline at both checks: a mobile-data blip (a mast change, 4G to 5G) comes back
+        // within a few seconds and must not move the music anywhere.
         main.postDelayed({
-            // A Wi-Fi / mobile hand-over: back within a moment, nothing to do.
             if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return@postDelayed
-            if (LocalPlayer.active.value || !playing || _activeDevice.value != null || adState.value) return@postDelayed
+            main.postDelayed({ handOverOffline() }, OFFLINE_SWITCH_CHECK_MS)
+        }, OFFLINE_SWITCH_CHECK_MS)
+    }
+
+    private fun handOverOffline() {
+        run {
+            if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return
+            if (LocalPlayer.active.value || !playing || _activeDevice.value != null || adState.value) return
             val q = _queue.value
             // The whole list ahead as the preloader planned it (the playlist, not only Spotify's
             // few queued songs), when it starts from the song playing.
@@ -189,13 +197,19 @@ object SongPlayer {
                     ?: com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks[id]?.let(com.music.spotui.data.cache.PlaybackCacheStore::toLocalTrack)
                 local?.let { id to it }
             }
-            if (kept.isEmpty()) { Log.i(TAG, "signal lost: none of the songs ahead are on this phone"); return@postDelayed }
-            val from = if (kept.first().first == currentTrackId) getCurrentPosition() else 0L
+            // Only when the song playing is itself on the phone: it goes on from where it is.
+            // Reported: with it not saved yet, the first saved song further down played instead,
+            // a "random" switch in the middle of a song after a blip of mobile signal.
+            if (kept.firstOrNull()?.first != currentTrackId) {
+                app.myspoti.host.android.Logbook.log("signal lost: the song playing is not on this phone, left to Spotify's buffer")
+                return
+            }
+            val from = getCurrentPosition()
             val ctx = currentContextUri
-            Log.i(TAG, "signal lost: ${kept.size} of ${ids.size} songs ahead play from this phone")
+            app.myspoti.host.android.Logbook.log("signal lost: ${kept.size} of ${ids.size} songs ahead play from this phone, from ${from / 1000}s")
             LocalPlayer.play(kept.map { it.second }, 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = true)
             if (from > 0) LocalPlayer.seekTo(from)
-        }, OFFLINE_SWITCH_CHECK_MS)
+        }
     }
 
     private fun resolvePlaying(paused: Boolean): Boolean {
@@ -824,7 +838,7 @@ object SongPlayer {
                 } else streamFallback(title, singer, durMs)?.let { url ->
                     // Played while it streams: the song starts in a second or two instead of
                     // waiting for the whole file (what made the fallback feel stuck).
-                    Log.i(TAG, "fallback: streaming $title from YouTube Music")
+                    app.myspoti.host.android.Logbook.log("fallback: streaming $title from YouTube Music")
                     com.music.spotui.data.local.LocalTrack(
                         id = com.music.spotui.data.offline.OfflineStore.localIdOf(dedupKey),
                         uri = android.net.Uri.parse(url),
