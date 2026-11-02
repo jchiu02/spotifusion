@@ -30,11 +30,16 @@ android {
         minSdk = 29
         targetSdk = 36
         // CI release builds pass the tag's version (-PappVersionName / -PappVersionCode).
-        versionCode = (findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 2002
+        // Each CI run counts up (2002 + run number), so a newer build is a newer version and the
+        // report and Settings say which build is installed.
+        versionCode = (findProperty("appVersionCode") as String?)?.toIntOrNull()
+            ?: System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.let { 2002 + it } ?: 2002
         versionName = version
         // GitHub "owner/repo" whose releases the app checks for updates; empty = off
         // (local builds). CI sets it to the repository it builds.
         // Inspectable hidden player in a test build (-PwebDebug=true); never in releases.
+        // The commit this APK was built from (CI), shown in Settings and the diagnostic report.
+        buildConfigField("String", "BUILD_ID", "\"${System.getenv("GITHUB_SHA")?.take(7) ?: "local"}\"")
         buildConfigField("boolean", "WEB_DEBUG", "${(findProperty("webDebug") as String?) == "true"}")
         buildConfigField("String", "UPDATE_REPO", "\"${(findProperty("updateRepo") as String?) ?: System.getenv("MYSPOTI_UPDATE_REPO") ?: "p1di/spotifusion"}\"")
         ndk {
@@ -53,6 +58,14 @@ android {
     val envStore = System.getenv("MYSPOTI_KEYSTORE")
     val hasReleaseKey = envStore != null || keystorePropertiesFile.exists()
     signingConfigs {
+        // Personal builds: one key kept in the repo, so every CI build installs over the last
+        // (a fresh debug key per CI run made Android refuse the update and keep the old app).
+        create("personal") {
+            storeFile = rootProject.file("keystore/personal-debug.jks")
+            storePassword = "spotifock"
+            keyAlias = "spotifock"
+            keyPassword = "spotifock"
+        }
         create("release") {
             if (envStore != null) {
                 storeFile = file(envStore)
@@ -72,6 +85,7 @@ android {
         debug {
             // Installs next to the release apps (own data, own sign-in).
             applicationIdSuffix = ".dev"
+            signingConfig = signingConfigs.getByName("personal")
             manifestPlaceholders["appLabel"] = "Spotifock"
         }
         release {

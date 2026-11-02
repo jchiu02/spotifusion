@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 class MyspotiApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        app.myspoti.host.android.Logbook.buildId = app.myspoti.engine.BuildConfig.BUILD_ID
         app.myspoti.power.EnergySettings.init(this)
         // Spotify session (hidden Web Player + API), caches, downloads, data saver.
         Graph.init(this)

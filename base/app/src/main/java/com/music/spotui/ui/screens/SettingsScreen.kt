@@ -142,6 +142,9 @@ fun SettingsScreen(navController: NavController) {
             Divider()
 
             Section(R.string.settings_section_app)
+            // Which build is installed (version = 2002 + the GitHub run number, and its commit).
+            Text("Build ${app.myspoti.engine.BuildConfig.VERSION_CODE} · ${app.myspoti.engine.BuildConfig.BUILD_ID}",
+                color = Color(0xFFB3B3B3), fontSize = 12.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
             // The hidden Web Player stuck or crashed: rebuild it without leaving the app.
             Column(
                 Modifier.fillMaxWidth().clickable { app.myspoti.host.android.MyspotiRuntime.host.reload() }

@@ -121,6 +121,8 @@ object Logbook {
     /** The lines the 402 analyses read: refusals, the matrix, registration, clusters, licences, routes, ads. */
     private val RELEVANT_402 = Regex("""(?i)refus|\b402\b|registration|cluster:|licence|command headers|commands from the page|relay route|relay: |audio after|ad break|page ready|connect/transfer|previous player device""")
     private const val RELEVANT_LINES = 50
+    /** The commit the app was built from, set by the app at start (its BuildConfig). */
+    @Volatile var buildId: String? = null
     /** Lines in the report's first section (newest first). */
     private const val LATEST_LINES = 70
 
@@ -151,7 +153,7 @@ object Logbook {
             if (MyspotiRuntime.spotify.player.drmMissing.value) "missing (nothing Spotify streams can play)" else null
         }.getOrNull() else null
         val header = buildList {
-            add("app" to "$versionName ($versionCode)")
+            add("app" to "$versionName ($versionCode) build ${buildId ?: "?"}")
             add("android" to "${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT})")
             add("device" to "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
             add("webview" to (webView?.let { "${it.packageName} ${it.versionName}" } ?: "?"))
