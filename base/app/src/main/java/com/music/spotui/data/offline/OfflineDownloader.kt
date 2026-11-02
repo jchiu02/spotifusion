@@ -414,7 +414,7 @@ object OfflineDownloader {
         cleanNorm(FEAT_TAIL.replace(HYPHEN_NOISE.replace(BRACKET_NOISE.replace(s, ""), ""), ""))
 
     private fun matchYouTubeTrack(meta: Meta): String? {
-        // First try SpotiDuck's strict 3s YouTube Music song finder
+        // First try Spotifock's strict 3s YouTube Music song finder
         YouTubeSource.findSong(meta.title, meta.artist, meta.durationMs)?.let { return it.url }
 
         // Next run BitChord's full TrackMatcher over YouTube Music SONGS

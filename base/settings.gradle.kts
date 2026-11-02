@@ -25,7 +25,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SpotiDuck"
+rootProject.name = "Spotifock"
 include(":app")
 include(":api")
 include(":api-spotify")

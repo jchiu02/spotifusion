@@ -724,7 +724,7 @@ object SongPlayer {
 
     /**
      * When Spotify's Web Player refuses playback (402 country/license restriction on Free accounts)
-     * or Widevine DRM is unavailable on the device, automatically fall back to SpotiDuck's
+     * or Widevine DRM is unavailable on the device, automatically fall back to Spotifock's
      * BitChord audio engine ([OfflineStore] / [com.music.spotui.data.offline.OfflineDownloader.fetchFallbackAudioFile])
      * and play via [LocalPlayer] so the user's song still plays seamlessly.
      */
@@ -788,7 +788,7 @@ object SongPlayer {
                     fallbackInFlightTrackId = ""
                     if (localTrack != null) {
                         val ctxUri = lastRequestedContextUri.ifBlank { currentContextUri }
-                        val ctxName = knownContextName(ctxUri).ifBlank { album.ifBlank { "SpotiDuck" } }
+                        val ctxName = knownContextName(ctxUri).ifBlank { album.ifBlank { "Spotifock" } }
                         currentTrackId = trackId
                         LocalPlayer.play(
                             list = listOf(localTrack),

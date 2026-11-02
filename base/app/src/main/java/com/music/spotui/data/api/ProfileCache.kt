@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /** The signed-in profile (name, avatar, user id), fetched once per session, with optional local overrides. */
 object ProfileCache {
-    private const val PREFS_NAME = "spotiduck_profile_prefs"
+    private const val PREFS_NAME = "spotifock_profile_prefs"
     private const val KEY_CUSTOM_NAME = "custom_name"
     private const val KEY_CUSTOM_IMAGE = "custom_image_uri"
 
