@@ -92,11 +92,12 @@ object SongPlayer {
     // (an ad left out on Spotify's side sent the player to a song Spotify picked). While a playlist
     // plays, a song nobody picked or queued that is not in it is replaced by the playlist's next.
     @Volatile private var userMovedAt = 0L
+    @Volatile private var durationOfPrevious = 0L
     @Volatile private var offListFixedAt = 0L
     private const val USER_MOVE_GRACE_MS = 6_000L
     private const val OFF_LIST_GAP_MS = 10_000L
 
-    private fun guardOffList(prevId: String, s: PlayerState) {
+    private fun guardOffList(prevId: String, s: PlayerState, prevPosition: Long) {
         val item = s.item ?: return
         if (item.kind != app.myspoti.api.ItemKind.TRACK) return
         val ctx = s.contextUri.orEmpty()
@@ -107,6 +108,28 @@ object SongPlayer {
         if (now - userMovedAt < USER_MOVE_GRACE_MS || now - offListFixedAt < OFF_LIST_GAP_MS) return
         if (item.provider == "queue") return
         if (LocalPlayer.active.value || _activeDevice.value != null || adState.value) return
+        // Another list than the one the user was in, and nobody chose it. Reported: Tokyo Drift
+        // playing, an ad, the page reloaded to get past it, and Spotify's session came back on a
+        // playlist from earlier in the day (one of its songs played). The user's list comes back,
+        // on the song that was cut where it was cut, or on the song after it when it had ended.
+        val userCtx = currentContextUri
+        if (userCtx.startsWith("spotify:playlist:") || userCtx.startsWith("spotify:album:")) {
+            if (ctx != userCtx && item.provider != "autoplay") {
+                offListFixedAt = now
+                val prevDuration = durationOfPrevious
+                val ended = prevDuration > 0 && prevPosition >= prevDuration - 5_000
+                val ids = QueuePreloader.playlistIds(userCtx)
+                val nextId = ids?.let { l -> l.indexOf(prevId).takeIf { it >= 0 && it < l.lastIndex }?.let { l[it + 1] } }
+                if (ended && nextId != null) {
+                    app.myspoti.host.android.Logbook.log("${item.name} from another list nobody chose: back to the user's list, its next song")
+                    transport { api.player.play(userCtx, trackUri = SPOTIFY_TRACK_PREFIX + nextId) }
+                } else {
+                    app.myspoti.host.android.Logbook.log("${item.name} from another list nobody chose: back to the song that was cut, at ${prevPosition / 1000}s")
+                    transport { api.player.play(userCtx, trackUri = SPOTIFY_TRACK_PREFIX + prevId, positionMs = prevPosition.takeIf { !ended } ?: 0L) }
+                }
+                return
+            }
+        }
         val ids = QueuePreloader.playlistIds(ctx) ?: return
         if (newId in ids) return
         val at = ids.indexOf(prevId)
@@ -535,6 +558,7 @@ object SongPlayer {
         bufferingState.value = s.isBuffering
         playing = resolvePlaying(s.isPaused)
         SpeakerKeepAlive.set(playing && _activeDevice.value == null)
+        if (item != null && item.uri != _nowPlaying.value.uri) durationOfPrevious = durationMs
         durationMs = item?.durationMs ?: 0L
         val reported = s.positionAt(System.currentTimeMillis())
         // Just after a seek the page can still report where it was (it is fetching the new spot):
@@ -551,7 +575,7 @@ object SongPlayer {
         }
         checkUnaskedPause(s)
         val trackChanged = uri != _nowPlaying.value.uri
-        if (trackChanged && item != null) guardOffList(trackIdOf(_nowPlaying.value.uri), s)
+        if (trackChanged && item != null) guardOffList(trackIdOf(_nowPlaying.value.uri), s, predicted)
         // Autoplay off: stop once, when the player moves on to a track it picked itself.
         // Tracks only: this is the music setting (similar songs). An episode the page rolls on
         // to after the previous one belongs to the show, not to that recommendation autoplay —
