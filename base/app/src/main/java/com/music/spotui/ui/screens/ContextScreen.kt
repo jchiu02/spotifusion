@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.music.spotui.ui.components.edgeSwipeBack
 import androidx.compose.material.icons.filled.SwapVert
@@ -370,6 +371,7 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
     var sort by remember(p.uri) { mutableStateOf(TrackOrder.load(ctx, p.uri)) }
     var askRemoveDownloads by remember { mutableStateOf(false) }
     var playlistMenu by remember { mutableStateOf(false) }
+    var addingSongs by remember { mutableStateOf(false) }
     // A11: confirmations (and their Undo) float above the list, not inside a menu that closes.
     val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -401,6 +403,13 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
         }
     }
 
+    if (addingSongs) com.music.spotui.ui.components.AddSongsSheet(
+        playlistUri = p.uri,
+        playlistName = p.name,
+        inPlaylist = p.tracks.map { it.spotifyTrackId }.filter { it.isNotBlank() }.toSet(),
+        seedIds = p.tracks.map { it.spotifyTrackId },
+        onDismiss = { addingSongs = false },
+    )
     if (playlistMenu) com.music.spotui.ui.components.PlaylistOptionsSheet(
         page = p,
         onDismiss = { playlistMenu = false },
@@ -760,6 +769,19 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
         }
         if (rows.isEmpty() && find.isNotBlank()) item(key = "find-empty") {
             com.music.spotui.ui.components.FindInListEmpty(stringResource(R.string.assisted_curation_search_empty_view_no_result_title, find.trim()))
+        }
+        // Your own or a collaborative playlist: "Add to this playlist" (search or suggestions).
+        if (p.type == "playlist" && vm.editableContext.value && find.isBlank()) item(key = "add-songs") {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { addingSongs = true }.padding(16.dp, 8.dp),
+            ) {
+                Box(Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFF2A2A2A)), contentAlignment = Alignment.Center) {
+                    Icon(androidx.compose.material.icons.Icons.Filled.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Text("Add to this playlist", color = Color.White, fontSize = 16.sp)
+            }
         }
         itemsIndexed(rows, key = { i, _ -> keys[i] }) { _, song ->
             com.music.spotui.ui.components.SwipeToQueue(song) { TrackRow(
