@@ -45,15 +45,21 @@ object NetProbe {
         started = true
         scope.launch {
             while (true) {
-                check()
+                // Never takes the app down: a failed probe is only a missed answer.
+                runCatching { check() }
                 // Often while music plays (a tunnel must be noticed in seconds), rarely otherwise.
-                delay(if (com.music.spotui.di.SongPlayer.isPlaying()) PLAYING_EVERY_MS else IDLE_EVERY_MS)
+                // Asked on the main thread: the phone's own player (ExoPlayer) may only be read
+                // there, and reading it from here crashed the app once a saved song had played.
+                val playing = runCatching {
+                    kotlinx.coroutines.withContext(Dispatchers.Main) { com.music.spotui.di.SongPlayer.isPlaying() }
+                }.getOrDefault(false)
+                delay(if (playing) PLAYING_EVERY_MS else IDLE_EVERY_MS)
             }
         }
     }
 
     /** Something hints at a loss (the network changed, a request failed, the sound stopped): probe now. */
-    fun poke() { scope.launch { check() } }
+    fun poke() { scope.launch { runCatching { check() } } }
 
     private suspend fun check() {
         if (checking) return
@@ -83,7 +89,7 @@ object NetProbe {
         if (reachable == value) return
         reachable = value
         app.myspoti.host.android.Logbook.log(if (value) "internet answers again" else "internet not answering (network attached, no data): offline")
-        listeners.forEach { runCatching { it(value) } }
+        listeners.forEach { l -> runCatching { l(value) } }
     }
 
     private val PROBE_URLS = listOf("https://www.gstatic.com/generate_204", "https://open.spotify.com/robots.txt")
