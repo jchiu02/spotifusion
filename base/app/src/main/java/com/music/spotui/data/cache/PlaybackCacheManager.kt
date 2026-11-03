@@ -88,10 +88,12 @@ object PlaybackCacheManager {
                                 )
                             )
                             if (maxCapBytes > 0) PlaybackCacheStore.enforceCap(maxCapBytes, keep)
+                            app.myspoti.host.android.Logbook.log("saved for offline: ${song.title} (${audioFile.length() / 1024} KB, ${PlaybackCacheStore.cachedTracks.size} songs kept)")
                         } else {
                             audioFile.delete()
                         }
                     }.onFailure {
+                        app.myspoti.host.android.Logbook.log("not saved for offline: ${song.title}: ${it.message?.take(80)}")
                         android.util.Log.w("PlaybackCache", "Failed to preload $id (${song.title}): ${it.message}")
                     }
                 } finally {
