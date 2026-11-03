@@ -101,6 +101,8 @@ fun AddSongsSheet(
         results = withContext(Dispatchers.IO) {
             runCatching { MyspotiRuntime.api.search.tracks(q, 0, 30).items }.getOrDefault(emptyList())
                 .filter { it.uri.startsWith("spotify:track:") }
+                // One row per song: a list with the same key twice crashes the app.
+                .distinctBy { it.uri }
                 .map { t ->
                     Candidate(
                         id = t.uri.substringAfterLast(':'),

@@ -15,6 +15,9 @@ import kotlinx.coroutines.launch
 class MyspotiApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        // First thing: a crash (or a freeze Android ended) is written down and shown in the next
+        // diagnostic report. It was never started, so crashes left nothing to read.
+        app.myspoti.host.android.LastExit.install(this)
         app.myspoti.host.android.Logbook.buildId = app.myspoti.engine.BuildConfig.BUILD_ID
         app.myspoti.power.EnergySettings.init(this)
         // Spotify session (hidden Web Player + API), caches, downloads, data saver.
