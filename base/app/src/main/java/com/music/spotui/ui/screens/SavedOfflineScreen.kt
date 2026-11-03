@@ -28,6 +28,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +67,22 @@ import com.music.spotui.ui.theme.AppBackground
 /** The library entry's name and the local player's context name of this list. */
 const val SAVED_OFFLINE_TITLE = "Saved for offline"
 
+/** How the list is ordered; [CUSTOM] is the user's own order (moved by hand), kept on the phone. */
+enum class SavedOrder(val label: String) { RECENT("Recently played"), ADDED("Recently saved"), TITLE("Title"), ARTIST("Artist"), CUSTOM("Custom") }
+
+/** The list's order and the custom order, kept in preferences. */
+object SavedOfflinePrefs {
+    private fun prefs() = com.music.spotui.di.Graph.app.getSharedPreferences("saved_offline", android.content.Context.MODE_PRIVATE)
+    var order by mutableStateOf(runCatching { SavedOrder.valueOf(prefs().getString("order", null) ?: "RECENT") }.getOrDefault(SavedOrder.RECENT))
+        private set
+    /** Track ids in the custom order (songs saved since come first, newest on top). */
+    var custom by mutableStateOf(prefs().getString("custom", "").orEmpty().split(',').filter { it.isNotBlank() })
+        private set
+
+    fun setOrder(o: SavedOrder) { order = o; prefs().edit().putString("order", o.name).apply() }
+    fun setCustom(ids: List<String>) { custom = ids; prefs().edit().putString("custom", ids.joinToString(",")).apply() }
+}
+
 /**
  * "Saved for offline": every song the app keeps on the phone by itself (the song playing, the
  * 2 hours ahead, songs played, the first songs of playlists opened; up to 500), most recently
@@ -67,7 +93,44 @@ const val SAVED_OFFLINE_TITLE = "Saved for offline"
 fun SavedOfflineScreen(navController: NavController) {
     val context = LocalContext.current
     // Snapshot read: the list follows songs as they are saved.
-    val tracks = PlaybackCacheStore.cachedTracks.values.sortedByDescending { it.lastPlayedAt }
+    val all = PlaybackCacheStore.cachedTracks.values.toList()
+    val order = SavedOfflinePrefs.order
+    val tracks = when (order) {
+        SavedOrder.RECENT -> all.sortedByDescending { it.lastPlayedAt }
+        SavedOrder.ADDED -> all.sortedByDescending { it.cachedAt }
+        SavedOrder.TITLE -> all.sortedBy { it.title.lowercase() }
+        SavedOrder.ARTIST -> all.sortedWith(compareBy({ it.artist.lowercase() }, { it.title.lowercase() }))
+        SavedOrder.CUSTOM -> {
+            val pos = SavedOfflinePrefs.custom.withIndex().associate { (i, id) -> id to i }
+            val (placed, fresh) = all.partition { it.trackId in pos }
+            fresh.sortedByDescending { it.cachedAt } + placed.sortedBy { pos.getValue(it.trackId) }
+        }
+    }
+    var menuFor by remember { mutableStateOf<String?>(null) }
+    var clearing by remember { mutableStateOf(false) }
+
+    /** Moves [id] to [to] in the list as shown, switching the list to the custom order. */
+    fun move(id: String, to: Int) {
+        val ids = tracks.map { it.trackId }.toMutableList()
+        val from = ids.indexOf(id)
+        if (from < 0) return
+        ids.removeAt(from)
+        ids.add(to.coerceIn(0, ids.size), id)
+        SavedOfflinePrefs.setCustom(ids)
+        SavedOfflinePrefs.setOrder(SavedOrder.CUSTOM)
+    }
+    fun remove(id: String) {
+        PlaybackCacheStore.removeTrack(id)
+        SavedOfflinePrefs.setCustom(SavedOfflinePrefs.custom - id)
+    }
+    if (clearing) AlertDialog(
+        onDismissRequest = { clearing = false },
+        containerColor = Color(0xFF282828),
+        title = { Text("Remove all saved songs?", color = Color.White) },
+        text = { Text("${tracks.size} songs are deleted from this phone. They are saved again as you play.", color = Color(0xFFB3B3B3)) },
+        confirmButton = { TextButton(onClick = { clearing = false; PlaybackCacheStore.clearAll(); SavedOfflinePrefs.setCustom(emptyList()) }) { Text("Remove all", color = Color(0xFFF15E6C)) } },
+        dismissButton = { TextButton(onClick = { clearing = false }) { Text("Cancel", color = Color.White) } },
+    )
     val np by SongPlayer.nowPlaying
     val playingHere = LocalPlayer.active.value && LocalPlayer.contextName == SAVED_OFFLINE_TITLE
 
@@ -102,7 +165,21 @@ fun SavedOfflineScreen(navController: NavController) {
                     val size = Formatter.formatShortFileSize(context, PlaybackCacheStore.totalBytes())
                     Text("${tracks.size} of ${PlaybackCacheManager.MAX_SONGS} songs · $size · plays with no signal",
                         color = Color(0xFFB3B3B3), fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 12.dp).horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        SavedOrder.entries.forEach { o ->
+                            val on = o == order
+                            Text(o.label, color = if (on) Color.Black else Color.White, fontSize = 13.sp,
+                                fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(if (on) AppAccent else Color(0xFF2A2A2A))
+                                    .clickable { SavedOfflinePrefs.setOrder(o) }.padding(horizontal = 12.dp, vertical = 6.dp))
+                        }
+                    }
                     Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Remove all", color = Color(0xFFB3B3B3), fontSize = 13.sp,
+                            modifier = Modifier.clip(RoundedCornerShape(16.dp)).clickable { clearing = true }.padding(horizontal = 4.dp, vertical = 6.dp))
                         Spacer(Modifier.weight(1f))
                         Icon(Icons.Filled.Shuffle, "Shuffle", tint = Color.White,
                             modifier = Modifier.size(40.dp).clip(CircleShape).clickable { play(0, shuffle = true) }.padding(8.dp))
@@ -116,9 +193,11 @@ fun SavedOfflineScreen(navController: NavController) {
             }
             itemsIndexed(tracks, key = { _, t -> t.trackId }) { i, t ->
                 val current = (playingHere && LocalPlayer.current()?.title == t.title) || np.uri == "spotify:track:${t.trackId}"
+                // Swipe to delete from the phone; ⋮ for the same and to move it in the list.
+                com.music.spotui.ui.components.SwipeToRemove(key = t.trackId, onRemove = { remove(t.trackId) }) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().clickable { play(i) }.padding(16.dp, 8.dp),
+                    modifier = Modifier.fillMaxWidth().background(AppBackground).clickable { play(i) }.padding(16.dp, 8.dp),
                 ) {
                     GlideImage(
                         model = t.coverUrl, contentDescription = null, transition = CrossFade, contentScale = ContentScale.Crop,
@@ -130,6 +209,18 @@ fun SavedOfflineScreen(navController: NavController) {
                         Text(t.title, color = if (current) AppAccent else Color.White, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(t.artist, color = Color(0xFFB3B3B3), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
+                    Box {
+                        Icon(Icons.Filled.MoreVert, "More", tint = Color(0xFFB3B3B3),
+                            modifier = Modifier.size(40.dp).clip(CircleShape).clickable { menuFor = t.trackId }.padding(8.dp))
+                        DropdownMenu(expanded = menuFor == t.trackId, onDismissRequest = { menuFor = null }, containerColor = Color(0xFF282828)) {
+                            DropdownMenuItem(text = { Text("Move to top", color = Color.White) }, onClick = { menuFor = null; move(t.trackId, 0) })
+                            if (i > 0) DropdownMenuItem(text = { Text("Move up", color = Color.White) }, onClick = { menuFor = null; move(t.trackId, i - 1) })
+                            if (i < tracks.lastIndex) DropdownMenuItem(text = { Text("Move down", color = Color.White) }, onClick = { menuFor = null; move(t.trackId, i + 1) })
+                            DropdownMenuItem(text = { Text("Move to bottom", color = Color.White) }, onClick = { menuFor = null; move(t.trackId, tracks.lastIndex) })
+                            DropdownMenuItem(text = { Text("Remove from phone", color = Color(0xFFF15E6C)) }, onClick = { menuFor = null; remove(t.trackId) })
+                        }
+                    }
+                }
                 }
             }
             item { Spacer(Modifier.height(160.dp)) }

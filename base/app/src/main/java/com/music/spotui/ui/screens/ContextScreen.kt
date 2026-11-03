@@ -378,6 +378,8 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
     var askRemoveDownloads by remember { mutableStateOf(false) }
     var playlistMenu by remember { mutableStateOf(false) }
     var addingSongs by remember { mutableStateOf(false) }
+    // "On this phone": only the songs saved for offline (or downloaded), the ones that play with no signal.
+    var onlySaved by remember(p.uri) { mutableStateOf(false) }
     // A11: confirmations (and their Undo) float above the list, not inside a menu that closes.
     val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -465,9 +467,10 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
             if (p.type == "liked" || p.type == "liked-artist") p.tracks.filter { SongPlayer.library["spotify:track:${it.spotifyTrackId}"] != false } else p.tracks
         }
     }
-    val rows by remember(p, find, sort) {
+    val rows by remember(p, find, sort, onlySaved) {
         derivedStateOf {
-            val found = if (findable) all.filter { com.music.spotui.ui.components.matchesFind(find, it.title, it.singer, it.album) } else all
+            val found0 = if (findable) all.filter { com.music.spotui.ui.components.matchesFind(find, it.title, it.singer, it.album) } else all
+            val found = if (onlySaved) found0.filter { onPhone(it.spotifyTrackId) } else found0
             if (findable) sort.apply(found) else found
         }
     }
@@ -776,6 +779,20 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
         if (rows.isEmpty() && find.isNotBlank()) item(key = "find-empty") {
             com.music.spotui.ui.components.FindInListEmpty(stringResource(R.string.assisted_curation_search_empty_view_no_result_title, find.trim()))
         }
+        // Songs of this list saved on the phone: a filter to show only them (they play with no signal).
+        val savedHere = p.tracks.count { onPhone(it.spotifyTrackId) }
+        if ((p.type == "playlist" || p.type == "album" || p.type == "liked") && (savedHere > 0 || onlySaved) && find.isBlank()) item(key = "only-saved") {
+            Row(Modifier.fillMaxWidth().padding(16.dp, 4.dp, 16.dp, 8.dp)) {
+                Text(
+                    "On this phone · $savedHere",
+                    color = if (onlySaved) Color.Black else Color.White, fontSize = 13.sp,
+                    fontWeight = if (onlySaved) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp))
+                        .background(if (onlySaved) com.music.spotui.ui.theme.AppAccent else Color(0xFF2A2A2A))
+                        .clickable { onlySaved = !onlySaved }.padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+        }
         // Your own or a collaborative playlist: "Add to this playlist" (search or suggestions).
         if (p.type == "playlist" && vm.editableContext.value && find.isBlank()) item(key = "add-songs") {
             Row(
@@ -795,7 +812,8 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
                 showCover = p.type != "album",
                 isCurrent = SongPlayer.isNowPlaying(song.spotifyTrackId, song.title, song.singer) || (song.spotifyTrackId.isBlank() && song.id == currentSongId),
                 saved = SongPlayer.library["spotify:track:${song.spotifyTrackId}"] ?: ("spotify:track:${song.spotifyTrackId}" in saved),
-                offline = com.music.spotui.data.offline.OfflineStore.statusOf(song.spotifyTrackId),
+                offline = com.music.spotui.data.offline.OfflineStore.statusOf(song.spotifyTrackId)
+                    ?: com.music.spotui.data.offline.OfflineStatus.Done.takeIf { com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks.containsKey(song.spotifyTrackId) },
                 onClick = { if (SmartShuffle.on.value == p.uri) vm.playSmart(p, song) else vm.play(p, song, sort) },
                 onMore = { menuSong = song },
             ) }
@@ -1230,3 +1248,8 @@ private fun SimilarAlbums(navController: NavController, firstTrackId: String, al
         }
     }
 }
+
+
+/** A song that plays with no signal: downloaded, or saved for offline by the app. */
+private fun onPhone(trackId: String): Boolean = trackId.isNotBlank() &&
+    (com.music.spotui.data.offline.OfflineStore.isDownloaded(trackId) || com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks.containsKey(trackId))
