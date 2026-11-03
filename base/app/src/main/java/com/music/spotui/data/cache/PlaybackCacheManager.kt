@@ -29,7 +29,7 @@ object PlaybackCacheManager {
      */
     fun preloadTracks(songs: List<SongsModel>, context: Context = Graph.app) {
         if (!CacheSettingsPref.preloadingEnabled) return
-        if (com.music.spotui.data.DataSaver.active || !OfflineStore.isOnline(context)) return
+        if (com.music.spotui.data.DataSaver.active || !com.music.spotui.data.NetProbe.online(context)) return
 
         val capMb = CacheSettingsPref.cacheCapMb
         val maxCapBytes = if (capMb > 0) capMb * 1024L * 1024L else 0L
@@ -58,7 +58,7 @@ object PlaybackCacheManager {
             for (song in toPreload) {
                 val id = song.spotifyTrackId
                 if (OfflineStore.isDownloaded(id) || PlaybackCacheStore.isCached(id)) continue
-                if (!OfflineStore.isOnline(context)) break
+                if (!com.music.spotui.data.NetProbe.online(context)) break
                 if (!inFlight.add(id)) continue
                 try {
                     runCatching {

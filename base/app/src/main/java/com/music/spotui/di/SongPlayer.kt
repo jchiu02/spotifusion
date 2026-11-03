@@ -229,12 +229,15 @@ object SongPlayer {
     // ── Signal lost (the Tube): the list goes on from the songs kept on this phone ──
     private const val OFFLINE_SWITCH_CHECK_MS = 3_000L
 
+    /** The internet stopped answering (a network still attached, the Tube): hand over at once. */
+    fun onInternetGone() { main.post { handOverOffline() } }
+
     /** Called when the phone's network goes away. */
     fun onNetworkLost() {
         // Still offline at both checks: a mobile-data blip (a mast change, 4G to 5G) comes back
         // within a few seconds and must not move the music anywhere.
         main.postDelayed({
-            if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return@postDelayed
+            if (com.music.spotui.data.NetProbe.online()) return@postDelayed
             main.postDelayed({ handOverOffline() }, OFFLINE_SWITCH_CHECK_MS)
         }, OFFLINE_SWITCH_CHECK_MS)
     }
@@ -249,7 +252,7 @@ object SongPlayer {
         val started = SystemClock.elapsedRealtime()
         val tick = object : Runnable {
             override fun run() {
-                if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) { app.myspoti.host.android.Logbook.log("signal back: Spotify goes on"); return }
+                if (com.music.spotui.data.NetProbe.online()) { app.myspoti.host.android.Logbook.log("signal back: Spotify goes on"); return }
                 if (LocalPlayer.active.value || trackId !in currentIds() || !userWantsPlaying) return
                 if (SystemClock.elapsedRealtime() - started > FOLLOW_MAX_MS) return
                 val now = SystemClock.elapsedRealtime()
@@ -284,7 +287,11 @@ object SongPlayer {
         if (at < 0) return false
         fun local(id: String) = com.music.spotui.data.offline.OfflineStore.tracks[id]?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
             ?: com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks[id]?.let(com.music.spotui.data.cache.PlaybackCacheStore::toLocalTrack)
-        val order = if (by > 0) plan.drop(at + 1) else plan.take(at).reversed()
+        val order = when {
+            by > 0 -> plan.drop(at + 1)
+            by < 0 -> plan.take(at).reversed()
+            else -> plan.drop(at) // the song playing first, then on
+        }
         val saved = order.mapNotNull(::local)
         if (saved.isEmpty()) {
             app.myspoti.host.android.Logbook.log("skip with no signal: no saved song ${if (by > 0) "after" else "before"} this one")
@@ -292,17 +299,22 @@ object SongPlayer {
             return true
         }
         // Forward: the saved songs after it in order. Back: the previous saved one, then on from there.
-        val list = if (by > 0) saved else listOf(saved.first()) + plan.drop(at).mapNotNull(::local)
+        val list = if (by >= 0) saved else listOf(saved.first()) + plan.drop(at).mapNotNull(::local)
+        // Resuming the song playing itself: from where it was.
+        val from = if (by == 0 && local(plan[at]) != null) getCurrentPosition() else 0L
         intendPlaying()
         val ctx = currentContextUri
-        app.myspoti.host.android.Logbook.log("skip with no signal: ${list.first().title} from this phone (${list.size} saved songs)")
-        main.post { LocalPlayer.play(list, 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = true) }
+        app.myspoti.host.android.Logbook.log("no signal: ${list.first().title} from this phone (${list.size} saved songs)")
+        main.post {
+            LocalPlayer.play(list, 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = true)
+            if (from > 0) LocalPlayer.seekTo(from)
+        }
         return true
     }
 
     private fun handOverOffline() {
         run {
-            if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return
+            if (com.music.spotui.data.NetProbe.online()) return
             if (LocalPlayer.active.value || !playing || _activeDevice.value != null || adState.value) return
             val q = _queue.value
             // The whole list ahead as the preloader planned it (the playlist, not only Spotify's
@@ -844,7 +856,7 @@ object SongPlayer {
         val trackId = episodeId ?: spotifyTrackIdForPlayback(song) ?: return
         val itemUri = if (episodeId != null) "spotify:episode:$episodeId" else SPOTIFY_TRACK_PREFIX + trackId
 
-        val isOffline = !com.music.spotui.data.offline.OfflineStore.isOnline(appCtx) || com.music.spotui.data.DataSaver.active
+        val isOffline = !com.music.spotui.data.NetProbe.online(appCtx) || com.music.spotui.data.DataSaver.active
         val offlineTrack = if (episodeId == null) com.music.spotui.data.offline.OfflineStore.tracks[trackId] else null
         val cachedTrack = if (episodeId == null) com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks[trackId] else null
 
@@ -957,7 +969,7 @@ object SongPlayer {
                     com.music.spotui.data.offline.OfflineStore.toLocalTrack(dl)
                 } else if (cached != null && com.music.spotui.data.cache.PlaybackCacheStore.isCached(trackId)) {
                     com.music.spotui.data.cache.PlaybackCacheStore.toLocalTrack(cached)
-                } else streamFallback(title, singer, durMs)?.let { url ->
+                } else (if (com.music.spotui.data.NetProbe.online()) streamFallback(title, singer, durMs) else null)?.let { url ->
                     // Played while it streams: the song starts in a second or two instead of
                     // waiting for the whole file (what made the fallback feel stuck).
                     app.myspoti.host.android.Logbook.log("fallback: streaming $title from YouTube Music")
@@ -970,7 +982,7 @@ object SongPlayer {
                         durationMs = durMs,
                         artUri = android.net.Uri.parse(coverUri),
                     )
-                } ?: run {
+                } ?: if (!com.music.spotui.data.NetProbe.online()) null else run {
                     val file = com.music.spotui.data.offline.OfflineDownloader.fetchFallbackAudioFile(
                         trackId = dedupKey,
                         title = title,
@@ -1052,6 +1064,9 @@ object SongPlayer {
 
     fun play() {
         if (LocalPlayer.active.value) { Haptics.click(); LocalPlayer.resume(); return }
+        // No internet: Spotify cannot resume. The song goes on from the phone when it is saved
+        // there (where it was), else the next saved one.
+        if (!com.music.spotui.data.NetProbe.online() && skipOffline(0)) return
         Haptics.click(); intendPlaying(); playing = true; positionAt = SystemClock.elapsedRealtime()
         // Tapped on the restored mini player while the Web Player is still loading.
         if (!stateSeen) resumeWhenReady = true
@@ -1091,6 +1106,15 @@ object SongPlayer {
      * Spotify often plays another copy of a listed song (a relinked id: same song, another
      * release or market), so the two differ (seen: In The Fire, two ids at once).
      */
+    fun isNowPlaying(trackId: String, title: String, artist: String): Boolean {
+        if (isNowPlaying(trackId)) return true
+        val st = boundState ?: return false
+        val t = st.title.value
+        if (t.isBlank() || !t.equals(title, ignoreCase = true)) return false
+        val a = st.singer.value
+        return a.isBlank() || artist.isBlank() || a.split(", ").any { artist.contains(it, ignoreCase = true) }
+    }
+
     private fun currentIds(): Set<String> =
         setOfNotNull(currentTrackId.takeIf { it.isNotBlank() }, _queue.value.current?.spotifyTrackId?.takeIf { it.isNotBlank() })
 
@@ -1107,7 +1131,7 @@ object SongPlayer {
         Haptics.click()
         if (LocalPlayer.active.value) { LocalPlayer.next(); return }
         // No signal: Spotify cannot take the skip. The next song saved on the phone plays instead.
-        if (!com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app) && skipOffline(1)) return
+        if (!com.music.spotui.data.NetProbe.online() && skipOffline(1)) return
         intendPlaying()
         // The first tap skips at once. Taps that follow it within SKIP_BURST_MS become one
         // jump to the song they add up to: a burst of "next" commands left the Web Player out
@@ -1141,7 +1165,7 @@ object SongPlayer {
         transport(waitReady = !stateSeen) { if (target == null) api.player.next() else api.player.skipTo(target) }
     }
     fun previous() { Haptics.click(); if (LocalPlayer.active.value) { LocalPlayer.previous(); return }
-        if (!com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app) && skipOffline(-1)) return
+        if (!com.music.spotui.data.NetProbe.online() && skipOffline(-1)) return
         intendPlaying(); transport(waitReady = !stateSeen) { api.player.previous() } }
 
     /** Tracks shufflePlay plays without a context: the first one, plus up to 49 queued. */

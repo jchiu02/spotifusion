@@ -787,7 +787,7 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
             com.music.spotui.ui.components.SwipeToQueue(song) { TrackRow(
                 song = song,
                 showCover = p.type != "album",
-                isCurrent = SongPlayer.isNowPlaying(song.spotifyTrackId) || (song.spotifyTrackId.isBlank() && song.id == currentSongId),
+                isCurrent = SongPlayer.isNowPlaying(song.spotifyTrackId, song.title, song.singer) || (song.spotifyTrackId.isBlank() && song.id == currentSongId),
                 saved = SongPlayer.library["spotify:track:${song.spotifyTrackId}"] ?: ("spotify:track:${song.spotifyTrackId}" in saved),
                 offline = com.music.spotui.data.offline.OfflineStore.statusOf(song.spotifyTrackId),
                 onClick = { if (SmartShuffle.on.value == p.uri) vm.playSmart(p, song) else vm.play(p, song, sort) },

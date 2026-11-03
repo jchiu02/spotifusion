@@ -21,6 +21,8 @@ object QueuePreloader {
         if (started) return
         started = true
         PlaybackCacheStore.init(Graph.app)
+        com.music.spotui.data.NetProbe.start()
+        com.music.spotui.data.NetProbe.onChange { up -> if (!up) SongPlayer.onInternetGone() }
 
         scope.launch {
             snapshotFlow { SongPlayer.nowPlaying.value }.collectLatest { np ->

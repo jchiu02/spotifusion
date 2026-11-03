@@ -45,6 +45,7 @@ object DataSaver {
 
     /** Shuts the hidden Spotify player down when the saver starts applying, rebuilds it when it stops. */
     private fun changed() {
+        com.music.spotui.data.NetProbe.poke()
         val now = active
         if (now == wasActive) return
         wasActive = now

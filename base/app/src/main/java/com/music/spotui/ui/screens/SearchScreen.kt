@@ -609,7 +609,7 @@ fun SearchSongRow(
     val context = LocalContext.current
     val isLiked = com.music.spotui.di.rememberTrackSaved(song.spotifyTrackId)
     val currentPlayingIndicatorColor =
-        if (SongPlayer.isNowPlaying(song.spotifyTrackId)) com.music.spotui.ui.theme.AppAccent else Color.White
+        if (SongPlayer.isNowPlaying(song.spotifyTrackId, song.title, song.singer)) com.music.spotui.ui.theme.AppAccent else Color.White
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
