@@ -1,0 +1,193 @@
+== errors ==
+150:e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:77:9 Platform declaration clash: The following declarations have the same JVM signature (setOrder(Lcom/music/spotui/ui/screens/SavedOrder;)V):
+153:e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:80:9 Platform declaration clash: The following declarations have the same JVM signature (setCustom(Ljava/util/List;)V):
+156:e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:82:5 Platform declaration clash: The following declarations have the same JVM signature (setOrder(Lcom/music/spotui/ui/screens/SavedOrder;)V):
+159:e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:83:5 Platform declaration clash: The following declarations have the same JVM signature (setCustom(Ljava/util/List;)V):
+163:> Task :app:compileDebugKotlin FAILED
+170:* What went wrong:
+181:BUILD FAILED in 1m 15s
+
+== tail ==
+Starting a Gradle Daemon (subsequent builds will be faster)
+Parallel Configuration Cache is an incubating feature.
+Calculating task graph as no cached configuration is available for tasks: testDebugUnitTest :api:test :api-spotify:test :host-cdp:test
+> Task :api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api:processResources NO-SOURCE
+> Task :api-spotify:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api-spotify:processResources
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig
+> Task :api:compileKotlin FROM-CACHE
+> Task :api:compileJava NO-SOURCE
+> Task :api:classes UP-TO-DATE
+> Task :app:generateDebugResources FROM-CACHE
+> Task :api:jar
+> Task :app:packageDebugResources FROM-CACHE
+> Task :host-android:preBuild UP-TO-DATE
+> Task :host-android:preDebugBuild UP-TO-DATE
+> Task :host-android:processDebugNavigationResources FROM-CACHE
+> Task :api-spotify:compileKotlin FROM-CACHE
+> Task :api-spotify:compileJava NO-SOURCE
+> Task :api-spotify:classes
+> Task :api-spotify:jar
+> Task :host-android:generateDebugResources FROM-CACHE
+> Task :host-android:packageDebugResources FROM-CACHE
+> Task :app:processDebugNavigationResources FROM-CACHE
+> Task :host-android:parseDebugLocalResources FROM-CACHE
+> Task :host-android:generateDebugRFile FROM-CACHE
+> Task :host-android:compileDebugKotlin FROM-CACHE
+> Task :host-android:javaPreCompileDebug FROM-CACHE
+> Task :host-android:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:parseDebugLocalResources FROM-CACHE
+> Task :app:generateDebugRFile FROM-CACHE
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :host-android:writeDebugAarMetadata
+> Task :host-android:bundleLibCompileToJarDebug
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:compileDebugNavigationResources FROM-CACHE
+> Task :app:mergeDebugResources FROM-CACHE
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug FROM-CACHE
+> Task :host-android:extractDeepLinksDebug FROM-CACHE
+> Task :host-android:processDebugManifest FROM-CACHE
+
+> Task :app:processDebugMainManifest
+[org.chromium.net:cronet-api:141.7340.3] /home/runner/.gradle/caches/9.7.1/transforms/59d5bfccd57da75740f39006f16bc903/transformed/cronet-api-141.7340.3/AndroidManifest.xml Warning:
+	Namespace 'org.chromium.net' is used in multiple modules and/or libraries: org.chromium.net:cronet-api:141.7340.3, org.chromium.net:cronet-shared:141.7340.3. Please ensure that all modules and libraries have a unique namespace. For more information, See https://developer.android.com/studio/build/configure-app-module#set-namespace
+
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :host-android:mapDebugSourceSetPaths
+> Task :host-android:compileDebugLibraryResources FROM-CACHE
+> Task :app:processDebugResources
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :host-android:bundleLibRuntimeToJarDebug
+> Task :host-android:processDebugJavaRes
+> Task :host-android:preDebugUnitTestBuild UP-TO-DATE
+> Task :host-android:generateDebugUnitTestStubRFile FROM-CACHE
+> Task :host-android:compileDebugUnitTestKotlin FROM-CACHE
+> Task :host-android:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :host-android:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :host-android:processDebugUnitTestJavaRes
+> Task :host-android:testDebugUnitTest FROM-CACHE
+> Task :api:compileTestKotlin NO-SOURCE
+> Task :api:compileTestJava NO-SOURCE
+> Task :api:processTestResources NO-SOURCE
+> Task :api:testClasses UP-TO-DATE
+> Task :api:test NO-SOURCE
+> Task :api-spotify:compileTestKotlin FROM-CACHE
+> Task :api-spotify:compileTestJava NO-SOURCE
+> Task :api-spotify:processTestResources NO-SOURCE
+> Task :api-spotify:testClasses UP-TO-DATE
+> Task :api-spotify:test FROM-CACHE
+> Task :host-cdp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :host-cdp:compileKotlin FROM-CACHE
+> Task :host-cdp:compileJava NO-SOURCE
+> Task :host-cdp:processResources NO-SOURCE
+> Task :host-cdp:classes UP-TO-DATE
+> Task :host-cdp:jar
+> Task :host-cdp:compileTestKotlin FROM-CACHE
+> Task :host-cdp:compileTestJava NO-SOURCE
+> Task :host-cdp:processTestResources NO-SOURCE
+> Task :host-cdp:testClasses UP-TO-DATE
+
+> Task :host-cdp:test
+
+LiveApiTest > search returns every kind in one round trip() SKIPPED
+
+LiveApiTest > catalog reads track, album and artist() SKIPPED
+
+LiveApiTest > playlists page through their tracks() SKIPPED
+
+LiveApiTest > library toggles a like and restores it() SKIPPED
+
+LiveApiTest > player plays, pauses, seeks and skips() SKIPPED
+
+LiveApiTest > queue adds and removes a track() SKIPPED
+
+LiveApiTest > volume is set and restored() SKIPPED
+
+LiveDomainsTest > podcasts shows and episodes() SKIPPED
+
+LiveDomainsTest > devices and jam() SKIPPED
+
+LiveDomainsTest > folders and playlists are created, edited and removed() SKIPPED
+
+LiveDomainsTest > home feed, filters and categories() SKIPPED
+
+LiveDomainsTest > raw access reaches untyped operations() SKIPPED
+
+LiveDomainsTest > users, profile, top content and history() SKIPPED
+
+LiveDomainsTest > search every tab and recent searches() SKIPPED
+
+LiveDomainsTest > library list, filters, liked songs and pins() SKIPPED
+
+LiveDomainsTest > artist pages beyond the overview() SKIPPED
+
+LiveDomainsTest > taste exclusion, playlist suggestions and player modes() SKIPPED
+
+LiveDomainsTest > lyrics, canvas, credits and radio() SKIPPED
+
+LiveDomainsTest > artist page, isrc and advanced queue() SKIPPED
+
+LiveEpisodeTest > an episode plays() SKIPPED
+
+LiveFeaturesTest > podcastsHome() SKIPPED
+
+LiveFeaturesTest > playlistAccessAndCover() SKIPPED
+
+LiveFeaturesTest > profilesAndRecents() SKIPPED
+
+LiveFeaturesTest > suggestionsAndSimilar() SKIPPED
+
+LiveFeaturesTest > artistBanRoundTrip() SKIPPED
+
+LiveFeaturesTest > episodeSaveRoundTrip() SKIPPED
+
+LiveOrderTest > plays recommendations inside a playlist order() SKIPPED
+
+LiveOrderTest > plays other songs inside liked songs() SKIPPED
+
+LiveOrderTest > plays a playlist in a given order() SKIPPED
+
+LivePlaythroughTest > plays song after song() SKIPPED
+
+> Task :app:compileDebugKotlin
+e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:77:9 Platform declaration clash: The following declarations have the same JVM signature (setOrder(Lcom/music/spotui/ui/screens/SavedOrder;)V):
+    fun `<set-order>`(`<set-?>`: SavedOrder): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+    fun setOrder(o: SavedOrder): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:80:9 Platform declaration clash: The following declarations have the same JVM signature (setCustom(Ljava/util/List;)V):
+    fun `<set-custom>`(`<set-?>`: List<String>): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+    fun setCustom(ids: List<String>): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:82:5 Platform declaration clash: The following declarations have the same JVM signature (setOrder(Lcom/music/spotui/ui/screens/SavedOrder;)V):
+    fun `<set-order>`(`<set-?>`: SavedOrder): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+    fun setOrder(o: SavedOrder): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/ui/screens/SavedOfflineScreen.kt:83:5 Platform declaration clash: The following declarations have the same JVM signature (setCustom(Ljava/util/List;)V):
+    fun `<set-custom>`(`<set-?>`: List<String>): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+    fun setCustom(ids: List<String>): Unit defined in com.music.spotui.ui.screens.SavedOfflinePrefs
+
+> Task :app:compileDebugKotlin FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793692555135.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/spotifusion/spotifusion/base/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 15s
+50 actionable tasks: 20 executed, 30 from cache
+Configuration cache entry stored.
