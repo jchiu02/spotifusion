@@ -79,8 +79,8 @@ object SavedOfflinePrefs {
     var custom by mutableStateOf(prefs().getString("custom", "").orEmpty().split(',').filter { it.isNotBlank() })
         private set
 
-    fun setOrder(o: SavedOrder) { order = o; prefs().edit().putString("order", o.name).apply() }
-    fun setCustom(ids: List<String>) { custom = ids; prefs().edit().putString("custom", ids.joinToString(",")).apply() }
+    fun choose(o: SavedOrder) { order = o; prefs().edit().putString("order", o.name).apply() }
+    fun saveCustom(ids: List<String>) { custom = ids; prefs().edit().putString("custom", ids.joinToString(",")).apply() }
 }
 
 /**
@@ -116,19 +116,19 @@ fun SavedOfflineScreen(navController: NavController) {
         if (from < 0) return
         ids.removeAt(from)
         ids.add(to.coerceIn(0, ids.size), id)
-        SavedOfflinePrefs.setCustom(ids)
-        SavedOfflinePrefs.setOrder(SavedOrder.CUSTOM)
+        SavedOfflinePrefs.saveCustom(ids)
+        SavedOfflinePrefs.choose(SavedOrder.CUSTOM)
     }
     fun remove(id: String) {
         PlaybackCacheStore.removeTrack(id)
-        SavedOfflinePrefs.setCustom(SavedOfflinePrefs.custom - id)
+        SavedOfflinePrefs.saveCustom(SavedOfflinePrefs.custom - id)
     }
     if (clearing) AlertDialog(
         onDismissRequest = { clearing = false },
         containerColor = Color(0xFF282828),
         title = { Text("Remove all saved songs?", color = Color.White) },
         text = { Text("${tracks.size} songs are deleted from this phone. They are saved again as you play.", color = Color(0xFFB3B3B3)) },
-        confirmButton = { TextButton(onClick = { clearing = false; PlaybackCacheStore.clearAll(); SavedOfflinePrefs.setCustom(emptyList()) }) { Text("Remove all", color = Color(0xFFF15E6C)) } },
+        confirmButton = { TextButton(onClick = { clearing = false; PlaybackCacheStore.clearAll(); SavedOfflinePrefs.saveCustom(emptyList()) }) { Text("Remove all", color = Color(0xFFF15E6C)) } },
         dismissButton = { TextButton(onClick = { clearing = false }) { Text("Cancel", color = Color.White) } },
     )
     val np by SongPlayer.nowPlaying
@@ -174,7 +174,7 @@ fun SavedOfflineScreen(navController: NavController) {
                             Text(o.label, color = if (on) Color.Black else Color.White, fontSize = 13.sp,
                                 fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
                                 modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(if (on) AppAccent else Color(0xFF2A2A2A))
-                                    .clickable { SavedOfflinePrefs.setOrder(o) }.padding(horizontal = 12.dp, vertical = 6.dp))
+                                    .clickable { SavedOfflinePrefs.choose(o) }.padding(horizontal = 12.dp, vertical = 6.dp))
                         }
                     }
                     Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
