@@ -148,7 +148,7 @@ fun SavedOfflineScreen(navController: NavController) {
             Image(painterResource(R.drawable.downloads_cover), null, modifier = Modifier.size(120.dp).clip(RoundedCornerShape(6.dp)))
             Text("Nothing saved yet", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center, modifier = Modifier.padding(top = 24.dp))
-            Text("Songs you play, the ones coming up, and the first songs of playlists you open are kept here (up to ${PlaybackCacheManager.MAX_SONGS}).",
+            Text("Songs you play, the ones coming up, and the first songs of playlists you open are kept here, up to the size set in Settings.",
                 color = Color(0xFFB3B3B3), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
         } else LazyColumn(Modifier.fillMaxSize()) {
             item {
@@ -163,7 +163,9 @@ fun SavedOfflineScreen(navController: NavController) {
                     )
                     Text(SAVED_OFFLINE_TITLE, color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp))
                     val size = Formatter.formatShortFileSize(context, PlaybackCacheStore.totalBytes())
-                    Text("${tracks.size} of ${PlaybackCacheManager.MAX_SONGS} songs · $size · plays with no signal",
+                    val capMb = com.music.spotui.data.preferences.CacheSettingsPref.cacheCapMb
+                    val cap = if (capMb > 0) " of " + Formatter.formatShortFileSize(context, capMb * 1024L * 1024L) else ""
+                    Text("${tracks.size} songs · $size$cap · plays with no signal",
                         color = Color(0xFFB3B3B3), fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
                     Row(
                         Modifier.fillMaxWidth().padding(top = 12.dp).horizontalScroll(rememberScrollState()),
