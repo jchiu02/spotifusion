@@ -27,6 +27,8 @@ object LocalPlayer {
     var contextUri: String = ""
         private set
     @Volatile var fallbackMode: Boolean = false
+    /** Covering a Spotify stall with the saved copy: the song after it goes back to Spotify. */
+    @Volatile private var rescue = false
         private set
     private var exo: ExoPlayer? = null
 
@@ -42,6 +44,7 @@ object LocalPlayer {
                 override fun onEvents(player: Player, events: Player.Events) = publish()
                 override fun onAudioSessionIdChanged(audioSessionId: Int) = AudioFx.attachSession(audioSessionId)
                 override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_ENDED && rescue) { SongPlayer.afterRescue(1); return }
                     if (playbackState == Player.STATE_ENDED && fallbackMode && !p.hasNextMediaItem() && p.repeatMode == Player.REPEAT_MODE_OFF) {
                         SongPlayer.advanceFallbackQueue(1)
                     }
@@ -51,13 +54,14 @@ object LocalPlayer {
             AudioFx.attachSession(p.audioSessionId)
         }
 
-    fun play(list: List<LocalTrack>, index: Int, shuffle: Boolean = false, context: String? = null, contextUri: String = "", fallback: Boolean = false) {
+    fun play(list: List<LocalTrack>, index: Int, shuffle: Boolean = false, context: String? = null, contextUri: String = "", fallback: Boolean = false, rescue: Boolean = false) {
         if (list.isEmpty()) return
         SongPlayer.pauseEngineForLocal()
         tracks.clear(); tracks.addAll(list); unshuffled = null
         contextName = context ?: Graph.app.getString(app.myspoti.engine.R.string.local_files_title)
         this.contextUri = contextUri
         fallbackMode = fallback
+        this.rescue = rescue
         active.value = true
         val p = player()
         p.shuffleModeEnabled = false
@@ -72,6 +76,7 @@ object LocalPlayer {
         if (!active.value) return
         active.value = false
         fallbackMode = false
+        rescue = false
         exo?.let { it.stop(); it.clearMediaItems() }
         tracks.clear(); unshuffled = null
         SongPlayer.restoreEngineQueue()
@@ -80,6 +85,7 @@ object LocalPlayer {
     fun resume() { exo?.play() }
     fun pause() { exo?.pause() }
     fun next() {
+        if (rescue) { SongPlayer.afterRescue(1); return }
         exo?.let {
             if (it.hasNextMediaItem()) it.seekToNextMediaItem()
             else if (fallbackMode) SongPlayer.advanceFallbackQueue(1)
@@ -88,6 +94,7 @@ object LocalPlayer {
     fun previous() {
         exo?.let {
             if (it.currentPosition > 3000) it.seekTo(0)
+            else if (rescue) SongPlayer.afterRescue(-1)
             else if (it.hasPreviousMediaItem()) it.seekToPreviousMediaItem()
             else if (fallbackMode) SongPlayer.advanceFallbackQueue(-1)
             else it.seekTo(0)

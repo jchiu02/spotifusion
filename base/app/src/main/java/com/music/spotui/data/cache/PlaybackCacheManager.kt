@@ -68,7 +68,7 @@ object PlaybackCacheManager {
                         val hit = com.music.spotui.video.YouTubeSource.findSong(song.title, song.singer, song.durationMs.toLong())
                             ?: com.music.spotui.video.YouTubeSource.findAudio(song.title, song.singer, song.durationMs.toLong())
                         if (hit != null) {
-                            com.music.spotui.video.MusicVideoController.downloadAudioFile(hit.url, audioFile)
+                            com.music.spotui.video.MusicVideoController.downloadAudioFile(hit.url, audioFile, best = true)
                         } else {
                             val fallback = OfflineDownloader.fetchFallbackAudioFile(id, song.title, song.singer, song.durationMs.toLong())
                             if (fallback != null && fallback.isFile && fallback.length() > 10_000L) {

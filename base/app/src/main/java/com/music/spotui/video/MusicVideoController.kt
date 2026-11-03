@@ -418,17 +418,21 @@ object MusicVideoController {
      * sides cancels its delay), lowest bitrate first; a stream YouTube no longer
      * serves (empty / truncated) falls back to the next; a refusal (403) gets fresh URLs once.
      */
-    internal suspend fun downloadAudioFile(url: String, out: File): File =
-        try { downloadAudioFileOnce(url, out, runInterruptible(Dispatchers.IO) { YouTubeSource.info(url) }) } catch (t: Throwable) {
+    /** [best]: the highest quality (songs saved to listen to); else the smallest (clip matching). */
+    internal suspend fun downloadAudioFile(url: String, out: File, best: Boolean = false): File =
+        try { downloadAudioFileOnce(url, out, runInterruptible(Dispatchers.IO) { YouTubeSource.info(url) }, best) } catch (t: Throwable) {
             currentCoroutineContext().ensureActive()
             if (t.message?.contains("403") != true) throw t
-            downloadAudioFileOnce(url, out, runInterruptible(Dispatchers.IO) { YouTubeSource.info(url, fresh = true) })
+            downloadAudioFileOnce(url, out, runInterruptible(Dispatchers.IO) { YouTubeSource.info(url, fresh = true) }, best)
         }
 
-    private suspend fun downloadAudioFileOnce(url: String, out: File, info: org.schabi.newpipe.extractor.stream.StreamInfo): File {
+    private suspend fun downloadAudioFileOnce(url: String, out: File, info: org.schabi.newpipe.extractor.stream.StreamInfo, best: Boolean): File {
         val streams = info.audioStreams
             .filter { it.format == MediaFormat.WEBMA_OPUS || it.format == MediaFormat.M4A }
-            .sortedWith(compareBy({ if (it.format == MediaFormat.M4A) 0 else 1 }, { if (it.averageBitrate > 0) it.averageBitrate else Int.MAX_VALUE }))
+            // Saved songs: the highest bitrate first (Opus ~160 kbps, M4A 128). They used to get
+            // the smallest M4A (~48 kbps), which is why they sounded worse than Spotify.
+            .let { l -> if (best) l.sortedByDescending { it.averageBitrate }
+                else l.sortedWith(compareBy({ if (it.format == MediaFormat.M4A) 0 else 1 }, { if (it.averageBitrate > 0) it.averageBitrate else Int.MAX_VALUE })) }
         if (streams.isEmpty()) error("no audio stream")
         var last: Throwable? = null
         for (a in streams.take(3)) {

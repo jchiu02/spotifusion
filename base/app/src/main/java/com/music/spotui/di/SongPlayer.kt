@@ -312,6 +312,69 @@ object SongPlayer {
         return true
     }
 
+    // ── Bad signal (online but too slow): the saved copy covers the stall ──
+    private const val STALL_RESCUE_MS = 5_000L
+    private var stuckSince = 0L
+    /** The song playing from the phone because Spotify stalled; Spotify takes the next song back. */
+    @Volatile var rescueMode = false
+        private set
+    private val stallWatch = object : Runnable {
+        override fun run() {
+            main.postDelayed(this, 1_000)
+            runCatching {
+                val now = SystemClock.elapsedRealtime()
+                val engine = MyspotiRuntime.isStarted
+                val stuck = engine && !LocalPlayer.active.value && userWantsPlaying && !adState.value &&
+                    _activeDevice.value == null && currentTrackId.isNotBlank() &&
+                    // Not straight after a pick or a seek: Spotify loading a new song is not a stall.
+                    now - userMovedAt > 4_000 &&
+                    (isBuffering || MyspotiRuntime.spotify.player.stalled.value)
+                stuckSince = if (stuck) (if (stuckSince == 0L) now else stuckSince) else 0L
+                if (stuckSince == 0L || now - stuckSince < STALL_RESCUE_MS) return@runCatching
+                stuckSince = 0L
+                // Offline proper is handled by the hand-over; this is the weak-signal case.
+                if (!com.music.spotui.data.NetProbe.online()) return@runCatching
+                val id = currentTrackId
+                val saved = savedLocal(id) ?: return@runCatching
+                val from = getCurrentPosition()
+                val ctx = currentContextUri
+                app.myspoti.host.android.Logbook.log("weak signal: Spotify stuck ${STALL_RESCUE_MS / 1000}s: ${saved.title} goes on from this phone at ${from / 1000}s")
+                rescueMode = true
+                LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true)
+                if (from > 0) LocalPlayer.seekTo(from)
+            }
+        }
+    }
+
+    private fun savedLocal(id: String) =
+        com.music.spotui.data.offline.OfflineStore.tracks[id]?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
+            ?: com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks[id]?.let(com.music.spotui.data.cache.PlaybackCacheStore::toLocalTrack)
+
+    /**
+     * The rescued song ended or was skipped ([by] +1 next, -1 previous): with a good signal the
+     * next song streams from Spotify again; still without one, the saved songs carry on.
+     */
+    fun afterRescue(by: Int) {
+        rescueMode = false
+        val plan = QueuePreloader.plan
+        val at = plan.indexOf(currentTrackId)
+        val target = if (at >= 0) plan.getOrNull(at + by) else null
+        if (!com.music.spotui.data.NetProbe.online()) {
+            if (!skipOffline(by)) LocalPlayer.stop()
+            return
+        }
+        val ctx = currentContextUri
+        app.myspoti.host.android.Logbook.log("signal good again: back to streaming")
+        if (target != null) {
+            playSong(SPOTIFY_TRACK_PREFIX + target, contextUri = ctx.ifBlank { null })
+        } else {
+            // Not in the planned list: Spotify's own next song.
+            LocalPlayer.stop()
+            userWantsPlaying = true
+            command { if (by >= 0) api.player.next() else api.player.previous() }
+        }
+    }
+
     private fun handOverOffline() {
         run {
             if (com.music.spotui.data.NetProbe.online()) return
@@ -402,6 +465,7 @@ object SongPlayer {
         com.music.spotui.data.api.LyricsApi.extraSources =
             com.music.spotui.data.preferences.isLyricsExtraSources(Graph.app)
         restoreLastTrack(state)
+        main.post(stallWatch)
         scope.launch { api.player.state.collect { s -> if (acceptsSessionUpdates()) applyState(s) } }
         // Another device plays (the phone as a remote), or the app sits in the background while the
         // page's own reports go quiet: the state is read again every few seconds so the
@@ -860,7 +924,9 @@ object SongPlayer {
         val offlineTrack = if (episodeId == null) com.music.spotui.data.offline.OfflineStore.tracks[trackId] else null
         val cachedTrack = if (episodeId == null) com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks[trackId] else null
 
-        if (isOffline || offlineTrack != null || cachedTrack != null) {
+        // Streams first: a saved copy plays only with no internet (or Data Saver on). Reported:
+        // saved songs played from the phone even on a good connection, at lower quality.
+        if (isOffline) {
             val primaryLocal = offlineTrack?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
                 ?: cachedTrack?.let(com.music.spotui.data.cache.PlaybackCacheStore::toLocalTrack)
 
