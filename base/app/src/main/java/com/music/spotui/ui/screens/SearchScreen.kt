@@ -575,7 +575,9 @@ fun RecentItemRow(
                 .weight(1f)
                 .padding(start = 10.dp, end = 8.dp),
         ) {
-            Text(text = item.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            // A recent song that is the one playing: green, as in every list.
+            val playingThis = item.type == "song" && SongPlayer.isNowPlaying(item.spotifyTrackId.ifBlank { item.key }, item.name, item.singer)
+            Text(text = item.name, color = if (playingThis) com.music.spotui.ui.theme.AppAccent else Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             val subtitle = when (item.type) {
                 "song" -> stringResource(R.string.assisted_curation_search_song) + " • ${item.singer}"
                 "artist" -> stringResource(R.string.artist_subtitle)
