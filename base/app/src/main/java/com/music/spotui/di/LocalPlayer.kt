@@ -40,6 +40,7 @@ object LocalPlayer {
         .build().also { p ->
             p.addListener(object : Player.Listener {
                 override fun onEvents(player: Player, events: Player.Events) = publish()
+                override fun onAudioSessionIdChanged(audioSessionId: Int) = AudioFx.attachSession(audioSessionId)
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED && fallbackMode && !p.hasNextMediaItem() && p.repeatMode == Player.REPEAT_MODE_OFF) {
                         SongPlayer.advanceFallbackQueue(1)
@@ -47,6 +48,7 @@ object LocalPlayer {
                 }
             })
             exo = p
+            AudioFx.attachSession(p.audioSessionId)
         }
 
     fun play(list: List<LocalTrack>, index: Int, shuffle: Boolean = false, context: String? = null, contextUri: String = "", fallback: Boolean = false) {

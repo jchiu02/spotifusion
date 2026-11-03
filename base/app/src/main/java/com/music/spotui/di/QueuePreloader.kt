@@ -22,6 +22,7 @@ object QueuePreloader {
         started = true
         PlaybackCacheStore.init(Graph.app)
         com.music.spotui.data.NetProbe.start()
+        runCatching { AudioFx.init() }
         com.music.spotui.data.NetProbe.onChange { up -> if (!up) SongPlayer.onInternetGone() }
 
         scope.launch {

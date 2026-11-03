@@ -85,6 +85,9 @@ fun SettingsScreen(navController: NavController) {
             if (com.music.spotui.data.offline.OfflineStore.tracks.isNotEmpty()) RemoveDownloadsRow()
             Divider()
 
+            com.music.spotui.ui.components.AudioSettings()
+            Divider()
+
             PlaybackCachingSection()
 
             Section(R.string.settings_section_data)
