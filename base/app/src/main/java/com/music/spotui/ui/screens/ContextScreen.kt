@@ -476,9 +476,13 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
     }
     // Unique and stable for a given list: a playlist can hold the same song twice (the id alone
     // is not unique) and the index changes at every sort (which would lose every item).
-    val keys = remember(rows) {
+    // The list and its keys are read once and kept together: the list reads live state (songs
+    // saved for offline, with "On this phone" on), and the list drawn later from the newer list
+    // with the older keys crashed (13 keys for 14 songs, after songs were saved while locked).
+    val rowList = rows
+    val keys = remember(rowList) {
         val seen = HashMap<String, Int>()
-        rows.map { s ->
+        rowList.map { s ->
             val id = s.id.toString()
             val n = (seen[id] ?: 0) + 1
             seen[id] = n
@@ -776,7 +780,7 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
                 }
             }
         }
-        if (rows.isEmpty() && find.isNotBlank()) item(key = "find-empty") {
+        if (rowList.isEmpty() && find.isNotBlank()) item(key = "find-empty") {
             com.music.spotui.ui.components.FindInListEmpty(stringResource(R.string.assisted_curation_search_empty_view_no_result_title, find.trim()))
         }
         // Songs of this list saved on the phone: a filter to show only them (they play with no signal).
@@ -806,7 +810,7 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
                 Text("Add to this playlist", color = Color.White, fontSize = 16.sp)
             }
         }
-        itemsIndexed(rows, key = { i, _ -> keys[i] }) { _, song ->
+        itemsIndexed(rowList, key = { i, _ -> keys.getOrElse(i) { "row-$i" } }) { _, song ->
             com.music.spotui.ui.components.SwipeToQueue(song) { TrackRow(
                 song = song,
                 showCover = p.type != "album",
