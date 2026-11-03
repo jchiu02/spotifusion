@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import com.music.spotui.di.SongPlayer
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
@@ -590,7 +591,7 @@ fun SumUpLibraryScreen(
                 Column(modifier = Modifier.padding(start = 14.dp).weight(1f)) {
                     Text(
                         text = entry.name,
-                        color = Color.White,
+                        color = if (SongPlayer.isPlayingFrom(libraryUri(entry))) com.music.spotui.ui.theme.AppAccent else Color.White,
                         fontSize = 16.sp,
                         lineHeight = 18.sp,
                         fontWeight = FontWeight.Normal,
@@ -871,7 +872,7 @@ fun LibraryGridScreen(
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = entry.name,
-                    color = Color.White,
+                    color = if (SongPlayer.isPlayingFrom(libraryUri(entry))) com.music.spotui.ui.theme.AppAccent else Color.White,
                     fontSize = 13.sp,
                     lineHeight = 15.sp,
                     fontWeight = FontWeight.Bold,
@@ -1069,4 +1070,14 @@ private fun LibrarySortSheet(onDismiss: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().clickable { LibraryOrder.reset(); onDismiss() }.padding(horizontal = 20.dp, vertical = 14.dp))
         }
     }
+}
+
+
+/** The list an entry of Your Library plays as (to show it green while music plays from it). */
+private fun libraryUri(entry: LibraryEntry): String = when {
+    entry.spotifyId == Api.HomeCache.LIKED_SONGS_ID -> "liked"
+    entry.uri.isNotBlank() -> entry.uri
+    entry.isFolder -> ""
+    entry.isPlaylist -> "spotify:playlist:${entry.spotifyId}"
+    else -> "spotify:album:${entry.spotifyId}"
 }

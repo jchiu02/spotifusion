@@ -576,7 +576,12 @@ fun RecentItemRow(
                 .padding(start = 10.dp, end = 8.dp),
         ) {
             // A recent song that is the one playing: green, as in every list.
-            val playingThis = item.type == "song" && SongPlayer.isNowPlaying(item.spotifyTrackId.ifBlank { item.key }, item.name, item.singer)
+            val playingThis = when (item.type) {
+                "song" -> SongPlayer.isNowPlaying(item.spotifyTrackId.ifBlank { item.key }, item.name, item.singer)
+                // A recent playlist or album that music plays from now.
+                "playlist", "album" -> SongPlayer.isPlayingFrom("spotify:${item.type}:${item.key}")
+                else -> false
+            }
             Text(text = item.name, color = if (playingThis) com.music.spotui.ui.theme.AppAccent else Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             val subtitle = when (item.type) {
                 "song" -> stringResource(R.string.assisted_curation_search_song) + " • ${item.singer}"
@@ -769,7 +774,7 @@ fun SearchAlbumRow(album: com.music.spotui.data.entity.AlbumsModel, onClick: () 
             contentDescription = "",
         )
         Column {
-            Text(text = album.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            Text(text = album.name, color = if (SongPlayer.isPlayingFrom("spotify:album:${album.spotifyId}")) com.music.spotui.ui.theme.AppAccent else Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             Text(text = stringResource(R.string.album) + " • ${album.artists}", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
     }
@@ -802,7 +807,7 @@ fun SearchPlaylistRow(playlist: com.music.spotui.data.entity.LibraryEntry, onCli
             contentDescription = "",
         )
         Column(Modifier.weight(1f)) {
-            Text(text = playlist.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            Text(text = playlist.name, color = if (SongPlayer.isPlayingFrom(uri)) com.music.spotui.ui.theme.AppAccent else Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             Text(text = stringResource(R.string.assisted_curation_search_playlist) +
                 (if (playlist.subtitle.isNotBlank()) " • ${playlist.subtitle}" else ""),
                 color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)

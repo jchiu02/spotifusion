@@ -1106,6 +1106,16 @@ object SongPlayer {
      * Spotify often plays another copy of a listed song (a relinked id: same song, another
      * release or market), so the two differ (seen: In The Fire, two ids at once).
      */
+    /** Whether music plays from the list [contextUri] now (a playlist, album, Liked Songs): it shows in green. */
+    fun isPlayingFrom(contextUri: String): Boolean {
+        if (contextUri.isBlank()) return false
+        val ctx = if (LocalPlayer.active.value) LocalPlayer.contextUri.ifBlank { _nowPlaying.value.contextUri } else _nowPlaying.value.contextUri
+        if (ctx.isBlank()) return false
+        if (ctx == contextUri) return true
+        // Liked Songs: the page calls it "spotify:user:<id>:collection", the app's entry "liked".
+        return contextUri == "liked" && ctx.contains(":collection")
+    }
+
     fun isNowPlaying(trackId: String, title: String, artist: String): Boolean {
         if (isNowPlaying(trackId)) return true
         val st = boundState ?: return false
