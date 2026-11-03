@@ -21,6 +21,8 @@ object PlaybackCacheManager {
     // Songs being fetched now: several preload passes overlap (every queue change starts one),
     // and each song is fetched by one of them only.
     private val inFlight = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    /** Songs kept on the phone at most; past it, the ones played (or saved) longest ago go first. */
+    const val MAX_SONGS = 500
 
     /**
      * Keeps [songs] (the song playing first, then the ones after it, in play order) on the phone,
@@ -88,6 +90,7 @@ object PlaybackCacheManager {
                                 )
                             )
                             if (maxCapBytes > 0) PlaybackCacheStore.enforceCap(maxCapBytes, keep)
+                            PlaybackCacheStore.enforceCount(MAX_SONGS, keep)
                             app.myspoti.host.android.Logbook.log("saved for offline: ${song.title} (${audioFile.length() / 1024} KB, ${PlaybackCacheStore.cachedTracks.size} songs kept)")
                         } else {
                             audioFile.delete()
@@ -103,10 +106,23 @@ object PlaybackCacheManager {
         }
     }
 
+    /**
+     * A song played to its end or skipped: kept (it used to be deleted 15 s later), only marked as
+     * played now, so the songs played least recently are the ones the 500-song limit drops.
+     */
     fun onTrackPlayed(trackId: String) {
         if (trackId.isBlank()) return
-        PlaybackCacheStore.scheduleTrackPurge(trackId)
+        PlaybackCacheStore.touch(trackId)
     }
+
+    /** The first songs of a playlist or album the user opens: saved too, so a tap there works with no signal. */
+    fun preloadOpened(songs: List<SongsModel>, context: Context = Graph.app) {
+        val first = songs.filter { it.spotifyTrackId.isNotBlank() }.take(OPENED_SONGS)
+        if (first.isEmpty()) return
+        // One by one, as the playlist ahead is: the first song counts as "playing", the rest as ahead.
+        preloadTracks(first, context)
+    }
+    private const val OPENED_SONGS = 5
 
     fun onTrackReplayed(trackId: String) {
         if (trackId.isBlank()) return

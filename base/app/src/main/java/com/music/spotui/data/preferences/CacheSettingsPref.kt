@@ -22,8 +22,8 @@ object CacheSettingsPref {
     var preloadMinutes by mutableStateOf(prefs(Graph.app).getInt(KEY_PRELOAD_MINUTES, 120).coerceIn(15, 240))
         private set
 
-    /** Cache cap in MB: 500, 1000, 2000, 5000, or 0 for Unlimited. Default: 1000 MB. */
-    var cacheCapMb by mutableStateOf(prefs(Graph.app).getInt(KEY_CACHE_CAP_MB, 1000))
+    /** Cache cap in MB: 500, 1000, 2000, 5000, or 0 for Unlimited. Default: 5 GB (room for the 500 songs kept). */
+    var cacheCapMb by mutableStateOf(prefs(Graph.app).getInt(KEY_CACHE_CAP_MB, 5000))
         private set
 
     fun setEnabled(c: Context, enabled: Boolean) {

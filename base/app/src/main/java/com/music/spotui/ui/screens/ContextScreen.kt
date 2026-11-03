@@ -362,6 +362,12 @@ private fun ContextContent(navController: NavController, vm: ContextViewModel, p
     LaunchedEffect(p.coverUri) {
         if (p.coverUri.isNotBlank()) Palette().extractSecondColorFromCoverUrl(context, p.coverUri) { tintTarget = it }
     }
+    // The first songs of a playlist or album opened are saved on the phone (while there is signal),
+    // so tapping one of them later in a tunnel still plays.
+    LaunchedEffect(p.uri, p.tracks.isNotEmpty()) {
+        if ((p.type == "playlist" || p.type == "album") && p.tracks.isNotEmpty())
+            com.music.spotui.data.cache.PlaybackCacheManager.preloadOpened(p.tracks)
+    }
     val tint by androidx.compose.animation.animateColorAsState(tintTarget, androidx.compose.animation.core.tween(350), label = "tint")
     var menuSong by remember { mutableStateOf<SongsModel?>(null) }
     // "Find in Liked Songs / in playlist".

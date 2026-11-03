@@ -202,6 +202,23 @@ object PlaybackCacheStore {
         }
     }
 
+    /** Marks [trackId] as just played (it is then the last to be dropped by the limits). */
+    fun touch(trackId: String) {
+        ensureInit()
+        pendingPurges.remove(trackId)?.cancel()
+        val t = synchronized(lock) { cachedTracks[trackId] } ?: return
+        withStateMutation { cachedTracks[trackId] = t.copy(lastPlayedAt = System.currentTimeMillis()) }
+        saveIndex()
+    }
+
+    /** At most [max] songs kept: the ones played (or saved) longest ago go first, never [keep]. */
+    fun enforceCount(max: Int, keep: Set<String> = emptySet()) {
+        val over = synchronized(lock) { cachedTracks.size } - max
+        if (over <= 0) return
+        val oldest = synchronized(lock) { cachedTracks.values.filter { it.trackId !in keep }.sortedBy { it.lastPlayedAt } }.take(over)
+        oldest.forEach { removeTrack(it.trackId) }
+    }
+
     fun clearAll() {
         ensureInit()
         pendingPurges.values.forEach { it.cancel() }
