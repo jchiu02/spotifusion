@@ -272,6 +272,34 @@ object SongPlayer {
     private const val FOLLOW_STUCK_MS = 4_000L
     private const val FOLLOW_MAX_MS = 15 * 60_000L
 
+    /**
+     * A skip with no signal: the song [by] places on in the planned list (the playlist after the
+     * song playing) that is saved on the phone plays, with the saved ones after it queued. False
+     * when none is saved (the skip then goes to Spotify as usual).
+     */
+    private fun skipOffline(by: Int): Boolean {
+        val plan = QueuePreloader.plan
+        val ids = currentIds()
+        val at = plan.indexOfFirst { it in ids }
+        if (at < 0) return false
+        fun local(id: String) = com.music.spotui.data.offline.OfflineStore.tracks[id]?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
+            ?: com.music.spotui.data.cache.PlaybackCacheStore.cachedTracks[id]?.let(com.music.spotui.data.cache.PlaybackCacheStore::toLocalTrack)
+        val order = if (by > 0) plan.drop(at + 1) else plan.take(at).reversed()
+        val saved = order.mapNotNull(::local)
+        if (saved.isEmpty()) {
+            app.myspoti.host.android.Logbook.log("skip with no signal: no saved song ${if (by > 0) "after" else "before"} this one")
+            main.post { android.widget.Toast.makeText(Graph.app, "No signal, and the next songs aren't saved yet", android.widget.Toast.LENGTH_SHORT).show() }
+            return true
+        }
+        // Forward: the saved songs after it in order. Back: the previous saved one, then on from there.
+        val list = if (by > 0) saved else listOf(saved.first()) + plan.drop(at).mapNotNull(::local)
+        intendPlaying()
+        val ctx = currentContextUri
+        app.myspoti.host.android.Logbook.log("skip with no signal: ${list.first().title} from this phone (${list.size} saved songs)")
+        main.post { LocalPlayer.play(list, 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = true) }
+        return true
+    }
+
     private fun handOverOffline() {
         run {
             if (com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app)) return
@@ -1078,6 +1106,8 @@ object SongPlayer {
         Log.d(TAG, "next tapped")
         Haptics.click()
         if (LocalPlayer.active.value) { LocalPlayer.next(); return }
+        // No signal: Spotify cannot take the skip. The next song saved on the phone plays instead.
+        if (!com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app) && skipOffline(1)) return
         intendPlaying()
         // The first tap skips at once. Taps that follow it within SKIP_BURST_MS become one
         // jump to the song they add up to: a burst of "next" commands left the Web Player out
@@ -1110,7 +1140,9 @@ object SongPlayer {
         val target = burstUpcoming.getOrNull(burstTaps - 1)
         transport(waitReady = !stateSeen) { if (target == null) api.player.next() else api.player.skipTo(target) }
     }
-    fun previous() { Haptics.click(); if (LocalPlayer.active.value) { LocalPlayer.previous(); return }; intendPlaying(); transport(waitReady = !stateSeen) { api.player.previous() } }
+    fun previous() { Haptics.click(); if (LocalPlayer.active.value) { LocalPlayer.previous(); return }
+        if (!com.music.spotui.data.offline.OfflineStore.isOnline(Graph.app) && skipOffline(-1)) return
+        intendPlaying(); transport(waitReady = !stateSeen) { api.player.previous() } }
 
     /** Tracks shufflePlay plays without a context: the first one, plus up to 49 queued. */
     private const val SHUFFLE_QUEUE_MAX = 50
