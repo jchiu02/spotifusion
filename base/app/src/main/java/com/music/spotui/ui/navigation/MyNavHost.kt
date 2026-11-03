@@ -119,6 +119,14 @@ fun MyNavHost(
             com.music.spotui.ui.screens.LocalFilesScreen(navHostController)
         }
 
+        page(Routes.SavedOffline.route){
+            LaunchedEffect(playerState) {
+                bottomBarState.value = true
+                bottomBarPlayerState.value = playerState != ""
+            }
+            com.music.spotui.ui.screens.SavedOfflineScreen(navHostController)
+        }
+
         page(Routes.Downloads.route){
             LaunchedEffect(playerState) {
                 bottomBarState.value = true

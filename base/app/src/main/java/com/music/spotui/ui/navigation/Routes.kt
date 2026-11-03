@@ -24,6 +24,7 @@ sealed class Routes(
     object Liked : Routes(0, "Liked", "liked")
     object LocalFiles : Routes(0, "LocalFiles", "localfiles")
     object Downloads : Routes(0, "Downloads", "downloads")
+    object SavedOffline : Routes(0, "SavedOffline", "savedoffline")
     object Folder : Routes(0, "Folder", "folder")
     object LocalPlaylist : Routes(0, "LocalPlaylist", "localplaylist")
     object Category : Routes(0, "Category", "category")

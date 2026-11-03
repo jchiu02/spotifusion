@@ -60,6 +60,8 @@ class Api constructor(
         const val LOCAL_FILES_ID = "local-files"
         /** "Downloaded" (songs kept for offline listening), pinned under Local Files. */
         const val DOWNLOADS_ID = "downloads"
+        /** "Saved for offline" (the app's own song cache, up to 500), pinned under Downloads. */
+        const val SAVED_OFFLINE_ID = "saved-offline"
         /** "Your Episodes" (saved podcast episodes). */
         const val EPISODES_ID = "your-episodes"
         /** "Recently played": Spotify's own list for the account, pinned in the library. */
