@@ -1,0 +1,174 @@
+== errors ==
+142:> Task :app:compileDebugKotlin FAILED
+143:e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/LocalPlayer.kt:32:5 Property must be initialized.
+144:e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/LocalPlayer.kt:33:9 A 'val' property cannot have a setter.
+153:* What went wrong:
+164:BUILD FAILED in 2m 14s
+
+== tail ==
+Starting a Gradle Daemon (subsequent builds will be faster)
+Parallel Configuration Cache is an incubating feature.
+Calculating task graph as no cached configuration is available for tasks: testDebugUnitTest :api:test :api-spotify:test :host-cdp:test
+> Task :api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api:processResources NO-SOURCE
+> Task :api-spotify:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api-spotify:processResources
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig
+> Task :api:compileKotlin FROM-CACHE
+> Task :api:compileJava NO-SOURCE
+> Task :api:classes UP-TO-DATE
+> Task :app:generateDebugResources FROM-CACHE
+> Task :api:jar
+> Task :app:packageDebugResources FROM-CACHE
+> Task :host-android:preBuild UP-TO-DATE
+> Task :host-android:preDebugBuild UP-TO-DATE
+> Task :host-android:processDebugNavigationResources FROM-CACHE
+> Task :app:processDebugNavigationResources FROM-CACHE
+> Task :app:parseDebugLocalResources FROM-CACHE
+> Task :app:generateDebugRFile FROM-CACHE
+> Task :host-android:generateDebugResources FROM-CACHE
+> Task :host-android:packageDebugResources FROM-CACHE
+> Task :host-android:parseDebugLocalResources FROM-CACHE
+> Task :host-android:generateDebugRFile FROM-CACHE
+> Task :host-android:javaPreCompileDebug FROM-CACHE
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :host-android:writeDebugAarMetadata
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:compileDebugNavigationResources FROM-CACHE
+> Task :app:mergeDebugResources FROM-CACHE
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug FROM-CACHE
+> Task :host-android:extractDeepLinksDebug FROM-CACHE
+> Task :host-android:processDebugManifest FROM-CACHE
+
+> Task :app:processDebugMainManifest
+[org.chromium.net:cronet-api:141.7340.3] /home/runner/.gradle/caches/9.7.1/transforms/59d5bfccd57da75740f39006f16bc903/transformed/cronet-api-141.7340.3/AndroidManifest.xml Warning:
+	Namespace 'org.chromium.net' is used in multiple modules and/or libraries: org.chromium.net:cronet-api:141.7340.3, org.chromium.net:cronet-shared:141.7340.3. Please ensure that all modules and libraries have a unique namespace. For more information, See https://developer.android.com/studio/build/configure-app-module#set-namespace
+
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :host-android:mapDebugSourceSetPaths
+> Task :host-android:compileDebugLibraryResources FROM-CACHE
+> Task :app:processDebugResources
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :host-android:preDebugUnitTestBuild UP-TO-DATE
+> Task :host-android:generateDebugUnitTestStubRFile FROM-CACHE
+> Task :host-android:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :api:compileTestKotlin NO-SOURCE
+> Task :api:compileTestJava NO-SOURCE
+> Task :api:processTestResources NO-SOURCE
+> Task :api:testClasses UP-TO-DATE
+> Task :api:test NO-SOURCE
+> Task :api-spotify:processTestResources NO-SOURCE
+> Task :host-cdp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :host-cdp:processResources NO-SOURCE
+> Task :host-cdp:processTestResources NO-SOURCE
+
+> Task :api-spotify:compileKotlin
+w: file:///home/runner/work/spotifusion/spotifusion/base/api-spotify/src/main/kotlin/app/myspoti/spotify/SpotifyPlayer.kt:1649:78 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Double'.
+
+> Task :api-spotify:compileJava NO-SOURCE
+> Task :api-spotify:classes
+> Task :api-spotify:jar
+> Task :api-spotify:compileTestKotlin
+> Task :api-spotify:compileTestJava NO-SOURCE
+> Task :api-spotify:testClasses UP-TO-DATE
+
+> Task :host-android:compileDebugKotlin
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/ControlRelay.kt:149:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/ControlRelay.kt:171:83 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/CronetStack.kt:105:47 'class UploadDataProviders : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/Fingerprint.kt:144:38 Unnecessary safe call on a non-null receiver of type 'JSONObject'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/MediaProxy.kt:46:13 Condition is always 'false'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:25:8 'class NotificationCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:81:87 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:82:64 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:89:25 'class MediaBrowserServiceCompat : Service' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:90:35 'class MediaSessionCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:108:19 'constructor(p0: Context, p1: String): MediaSessionCompat' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:114:30 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:114:50 'constructor(): PlaybackStateCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:116:27 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:132:9 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:203:79 Unnecessary safe call on a non-null receiver of type 'MediaSessionManager.RemoteUserInfo'.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:219:56 'class Callback : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:264:49 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:264:69 'constructor(): MediaMetadataCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:265:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:266:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:267:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:268:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:269:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:270:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:274:27 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:275:27 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:283:47 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:284:29 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:285:21 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:287:34 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:287:54 'constructor(): PlaybackStateCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:314:74 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:394:66 'static field WIFI_MODE_FULL_HIGH_PERF: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:445:30 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:445:86 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:451:17 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:452:34 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:452:73 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:454:17 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:454:73 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:457:17 'class MediaButtonReceiver : BroadcastReceiver' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:458:34 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:458:79 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:459:23 'constructor(): NotificationCompat.MediaStyle' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:484:46 'class VolumeProviderCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:495:92 'class BrowserRoot : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:506:20 'constructor(p0: String, p1: Bundle?): MediaBrowserServiceCompat.BrowserRoot' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:508:16 'constructor(p0: String, p1: Bundle?): MediaBrowserServiceCompat.BrowserRoot' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:517:59 'class Result<T : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:517:97 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:537:67 'class Result<T : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:537:105 'class MediaItem : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:594:31 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:594:66 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:594:102 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:595:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:595:56 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:596:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:596:51 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:597:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:599:36 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/PlaybackService.kt:599:79 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/spotifusion/spotifusion/base/host-android/src/main/kotlin/app/myspoti/host/android/RelayNetwork.kt:77:21 Unnecessary safe call on a non-null receiver of type 'LinkProperties'.
+
+> Task :host-android:compileDebugJavaWithJavac NO-SOURCE
+> Task :host-android:bundleLibCompileToJarDebug
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/LocalPlayer.kt:32:5 Property must be initialized.
+e: file:///home/runner/work/spotifusion/spotifusion/base/app/src/main/java/com/music/spotui/di/LocalPlayer.kt:33:9 A 'val' property cannot have a setter.
+
+> Task :api-spotify:test
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793777459862.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/spotifusion/spotifusion/base/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 14s
+41 actionable tasks: 19 executed, 22 from cache
+Configuration cache entry stored.
