@@ -44,6 +44,15 @@ object LocalPlayer {
             p.addListener(object : Player.Listener {
                 override fun onEvents(player: Player, events: Player.Events) = publish()
                 override fun onAudioSessionIdChanged(audioSessionId: Int) = AudioFx.attachSession(audioSessionId)
+                // A file or stream that cannot play: never left silent.
+                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                    app.myspoti.host.android.Logbook.log("phone's player error: ${error.errorCodeName}")
+                    if (active.value) SongPlayer.onLocalSilence("error ${error.errorCodeName}")
+                }
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK)
+                        current()?.let { SongPlayer.onLocalNext(it) }
+                }
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED && rescue) { SongPlayer.afterRescue(1); return }
                     if (playbackState == Player.STATE_ENDED && fallbackMode && !p.hasNextMediaItem() && p.repeatMode == Player.REPEAT_MODE_OFF) {
@@ -102,6 +111,11 @@ object LocalPlayer {
         }
     }
     fun seekTo(ms: Long) { exo?.seekTo(ms) }
+    /** Next song, and playing again after an error (an errored player stays stopped). */
+    fun nextAndPlay() {
+        next()
+        exo?.let { if (it.playbackState == Player.STATE_IDLE) it.prepare(); it.play() }
+    }
     /**
      * Shuffle reorders the songs after the current one (and off puts the list's order back),
      * so the queue shown is the order that really plays and can be edited like any list.
@@ -167,6 +181,8 @@ object LocalPlayer {
         exo?.repeatMode = when (mode) { 1 -> Player.REPEAT_MODE_ALL; 2 -> Player.REPEAT_MODE_ONE; else -> Player.REPEAT_MODE_OFF }
     }
     fun isPlaying() = exo?.isPlaying == true
+    /** Wants to play but is loading (or stopped by an error): no sound. */
+    fun stuck(): Boolean = exo?.let { it.playWhenReady && (it.playbackState == Player.STATE_BUFFERING || it.playbackState == Player.STATE_IDLE) } == true
     fun position() = exo?.currentPosition ?: 0L
     fun duration() = exo?.duration?.takeIf { it > 0 } ?: current()?.durationMs ?: 0L
     fun current(): LocalTrack? = exo?.currentMediaItemIndex?.let { tracks.getOrNull(it) }
