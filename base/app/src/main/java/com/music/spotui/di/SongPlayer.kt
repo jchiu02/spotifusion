@@ -245,7 +245,7 @@ object SongPlayer {
     private const val NOTHING_PLAYS_CHECK_MS = 1_000L
 
     // ── Signal lost (the Tube): the list goes on from the songs kept on this phone ──
-    private const val OFFLINE_SWITCH_CHECK_MS = 3_000L
+    private const val OFFLINE_SWITCH_CHECK_MS = 1_500L
 
     /** The internet stopped answering (a network still attached, the Tube): hand over at once. */
     fun onInternetGone() { netChangedAt = SystemClock.elapsedRealtime(); main.post { handOverOffline() } }
@@ -291,7 +291,7 @@ object SongPlayer {
         }
         main.post(tick)
     }
-    private const val FOLLOW_STUCK_MS = 4_000L
+    private const val FOLLOW_STUCK_MS = 2_000L
     private const val FOLLOW_MAX_MS = 15 * 60_000L
 
     /**
@@ -332,9 +332,11 @@ object SongPlayer {
     }
 
     // ── Bad signal (online but too slow): the saved copy covers the stall ──
-    private const val STALL_RESCUE_MS = 5_000L
+    private const val STALL_RESCUE_MS = 2_000L
     private var stuckSince = 0L
     @Volatile private var adChangedAt = 0L
+    /** The song the silence rescue already moved on from (once per song, no repeated toasts). */
+    @Volatile private var silenceSkippedFor = ""
     /** The song playing from the phone because Spotify stalled; Spotify takes the next song back. */
     @Volatile var rescueMode = false
         private set
@@ -349,17 +351,29 @@ object SongPlayer {
                 val stuck = engine && !LocalPlayer.active.value && userWantsPlaying && !adState.value &&
                     _activeDevice.value == null && currentTrackId.isNotBlank() &&
                     // Not straight after a pick or a seek: Spotify loading a new song is not a stall.
-                    now - userMovedAt > 4_000 &&
+                    now - userMovedAt > 3_000 &&
                     // Nor the page getting past an ad (it reloads, then plays on by itself).
                     now - adChangedAt > 20_000 &&
                     (isBuffering || MyspotiRuntime.spotify.player.stalled.value)
+                val firstStuckSecond = stuck && stuckSince == 0L
                 stuckSince = if (stuck) (if (stuckSince == 0L) now else stuckSince) else 0L
+                // Silence: the signal is checked at once (the regular check can be 8 s away).
+                if (firstStuckSecond) com.music.spotui.data.NetProbe.poke()
                 if (stuckSince == 0L || now - stuckSince < STALL_RESCUE_MS) return@runCatching
                 stuckSince = 0L
-                // Offline proper is handled by the hand-over; this is the weak-signal case.
-                if (!com.music.spotui.data.NetProbe.online()) return@runCatching
+                // Reported: strong signal, then walking out of it, and silence. Whatever the signal
+                // says: the song goes on from the phone when it is saved there...
                 val id = currentTrackId
-                val saved = savedLocal(id) ?: return@runCatching
+                val saved = savedLocal(id)
+                if (saved == null) {
+                    // ...else, with no signal, the next saved song plays now instead of the silence.
+                    if (!com.music.spotui.data.NetProbe.online() && silenceSkippedFor != id) {
+                        silenceSkippedFor = id
+                        app.myspoti.host.android.Logbook.log("silence ${STALL_RESCUE_MS / 1000}s with no signal, this song not saved: the next saved song plays")
+                        skipOffline(1)
+                    }
+                    return@runCatching
+                }
                 val from = getCurrentPosition()
                 val ctx = currentContextUri
                 app.myspoti.host.android.Logbook.log("weak signal: Spotify stuck ${STALL_RESCUE_MS / 1000}s: ${saved.title} goes on from this phone at ${from / 1000}s")

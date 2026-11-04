@@ -93,7 +93,7 @@ object NetProbe {
     }
 
     private val PROBE_URLS = listOf("https://www.gstatic.com/generate_204", "https://open.spotify.com/robots.txt")
-    private const val PROBE_TIMEOUT_MS = 3_000L
+    private const val PROBE_TIMEOUT_MS = 2_000L
     private const val RECHECK_MS = 1_000L
     private const val MISSES_FOR_OFFLINE = 2
     private const val PLAYING_EVERY_MS = 8_000L
