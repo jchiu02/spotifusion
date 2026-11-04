@@ -322,7 +322,15 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         // The old page still says "ready" for a moment: its device is not one to command from now.
         app.myspoti.spotify.bridge.PageDevice.pageGone()
         reload()
-        return withTimeoutOrNull(45_000) { delay(1_500); bridge.ready.first { it && bridge.pagesGone != gone } } != null
+        val back = withTimeoutOrNull(45_000) { delay(1_500); bridge.ready.first { it && bridge.pagesGone != gone } } != null
+        // Reported: the song after an ad sent 0.4 s after "ready" got "No such device" (the page's
+        // device joins Spotify Connect ~1 s later) and was lost. Commands wait for the join.
+        if (back && app.myspoti.spotify.bridge.PageDevice.reported) {
+            val joined = withTimeoutOrNull(8_000) { app.myspoti.spotify.bridge.PageDevice.joined.first { it } } != null
+            if (!joined) bridge.logger?.invoke("page back, its device not joined after 8 s: playing anyway")
+            delay(300)
+        }
+        return back
     }
 
     /**
