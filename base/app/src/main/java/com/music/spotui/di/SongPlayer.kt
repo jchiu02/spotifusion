@@ -94,6 +94,9 @@ object SongPlayer {
     @Volatile private var userMovedAt = 0L
     @Volatile private var durationOfPrevious = 0L
     @Volatile private var offListFixedAt = 0L
+    /** When the network last went away or changed (Wi-Fi off, the Tube). */
+    @Volatile private var netChangedAt = 0L
+    private const val NET_CHANGE_GUARD_MS = 45_000L
     private const val USER_MOVE_GRACE_MS = 6_000L
     private const val OFF_LIST_GAP_MS = 10_000L
 
@@ -108,6 +111,21 @@ object SongPlayer {
         if (now - userMovedAt < USER_MOVE_GRACE_MS || now - offListFixedAt < OFF_LIST_GAP_MS) return
         if (item.provider == "queue") return
         if (LocalPlayer.active.value || _activeDevice.value != null || adState.value) return
+        // Reported: Wi-Fi off, and the page went back to an earlier song (Spotify's server still
+        // held the song from before the switch). Moved by nobody just after a network change, in
+        // the middle of the song: the song that was playing goes on where it was.
+        val prevDuration0 = durationOfPrevious
+        val midSong = prevDuration0 <= 0 || prevPosition < prevDuration0 - 5_000
+        if (now - netChangedAt < NET_CHANGE_GUARD_MS && midSong && prevPosition > 0) {
+            offListFixedAt = now
+            val back = currentContextUri.ifBlank { ctx }
+            app.myspoti.host.android.Logbook.log("${item.name} came in after the network changed, nobody chose it: back to the song that was playing, at ${prevPosition / 1000}s")
+            transport {
+                if (back.isNotBlank()) api.player.play(back, trackUri = SPOTIFY_TRACK_PREFIX + prevId, positionMs = prevPosition)
+                else api.player.play(SPOTIFY_TRACK_PREFIX + prevId, positionMs = prevPosition)
+            }
+            return
+        }
         // Another list than the one the user was in, and nobody chose it. Reported: Tokyo Drift
         // playing, an ad, the page reloaded to get past it, and Spotify's session came back on a
         // playlist from earlier in the day (one of its songs played). The user's list comes back,
@@ -230,10 +248,11 @@ object SongPlayer {
     private const val OFFLINE_SWITCH_CHECK_MS = 3_000L
 
     /** The internet stopped answering (a network still attached, the Tube): hand over at once. */
-    fun onInternetGone() { main.post { handOverOffline() } }
+    fun onInternetGone() { netChangedAt = SystemClock.elapsedRealtime(); main.post { handOverOffline() } }
 
     /** Called when the phone's network goes away. */
     fun onNetworkLost() {
+        netChangedAt = SystemClock.elapsedRealtime()
         // Still offline at both checks: a mobile-data blip (a mast change, 4G to 5G) comes back
         // within a few seconds and must not move the music anywhere.
         main.postDelayed({
@@ -315,6 +334,7 @@ object SongPlayer {
     // ── Bad signal (online but too slow): the saved copy covers the stall ──
     private const val STALL_RESCUE_MS = 5_000L
     private var stuckSince = 0L
+    @Volatile private var adChangedAt = 0L
     /** The song playing from the phone because Spotify stalled; Spotify takes the next song back. */
     @Volatile var rescueMode = false
         private set
@@ -322,12 +342,16 @@ object SongPlayer {
         override fun run() {
             main.postDelayed(this, 1_000)
             runCatching {
+                if (MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.adCover == null)
+                    MyspotiRuntime.spotify.player.adCover = { coverAd() }
                 val now = SystemClock.elapsedRealtime()
                 val engine = MyspotiRuntime.isStarted
                 val stuck = engine && !LocalPlayer.active.value && userWantsPlaying && !adState.value &&
                     _activeDevice.value == null && currentTrackId.isNotBlank() &&
                     // Not straight after a pick or a seek: Spotify loading a new song is not a stall.
                     now - userMovedAt > 4_000 &&
+                    // Nor the page getting past an ad (it reloads, then plays on by itself).
+                    now - adChangedAt > 20_000 &&
                     (isBuffering || MyspotiRuntime.spotify.player.stalled.value)
                 stuckSince = if (stuck) (if (stuckSince == 0L) now else stuckSince) else 0L
                 if (stuckSince == 0L || now - stuckSince < STALL_RESCUE_MS) return@runCatching
@@ -344,6 +368,26 @@ object SongPlayer {
                 if (from > 0) LocalPlayer.seekTo(from)
             }
         }
+    }
+
+    /**
+     * An ad break started: the next song plays at once from the phone when it is saved, while the
+     * page reloads past the ad in the background; the song after it streams again. True when covered.
+     */
+    fun coverAd(): Boolean {
+        if (LocalPlayer.active.value || _activeDevice.value != null || !userWantsPlaying) return false
+        val plan = QueuePreloader.plan
+        val at = plan.indexOf(currentTrackId)
+        val nextId = if (at >= 0) plan.getOrNull(at + 1) else null
+        val saved = nextId?.let(::savedLocal) ?: return false
+        val ctx = currentContextUri
+        app.myspoti.host.android.Logbook.log("ad: ${saved.title} plays from this phone meanwhile")
+        main.post {
+            currentTrackId = nextId
+            rescueMode = true
+            LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true)
+        }
+        return true
     }
 
     private fun savedLocal(id: String) =
@@ -608,6 +652,7 @@ object SongPlayer {
     private fun onAdPlaying(on: Boolean) {
         if (adState.value == on) return
         adState.value = on
+        adChangedAt = SystemClock.elapsedRealtime()
         pushNotification(null, boundState?.likeState?.value ?: false)
     }
 
@@ -1826,7 +1871,7 @@ object SongPlayer {
     /** The local player's track / state, shown like any other (player, mini player, notification). */
     fun onLocalState(t: com.music.spotui.data.local.LocalTrack, isPlaying: Boolean, pos: Long, dur: Long) {
         main.post {
-            if (!LocalPlayer.fallbackMode) currentTrackId = ""
+            if (!LocalPlayer.fallbackMode && !LocalPlayer.rescuing) currentTrackId = ""
             playing = isPlaying; positionMs = pos; positionAt = SystemClock.elapsedRealtime(); durationMs = dur
             bufferingState.value = false
             val uri = "local:${t.id}"

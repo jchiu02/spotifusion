@@ -240,6 +240,14 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         }
     }
 
+    /**
+     * Set by the app: at an ad break, plays the next song from the phone (saved) meanwhile; true
+     * when it does. The page is then reloaded past the ad with nothing played on it.
+     */
+    @Volatile var adCover: (() -> Boolean)? = null
+    /** The current ad break is covered by [adCover]: nothing is played on the page after it. */
+    @Volatile private var adCovered = false
+
     /** Set while [reloadAndPlayOn] runs: that reload says itself what plays next. */
     @Volatile private var ownReload = false
     /** What was playing when the page went away; null when nothing was. */
@@ -269,7 +277,7 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
                 }
                 if (playPickAfterReload()) return@runCatching
                 if (s == null) return@runCatching
-                if (next) { delay(1_500); playOn(s) } else resumeAfterReload(s)
+                if (next) { delay(400); playOn(s) } else resumeAfterReload(s)
             }
         } finally {
             ownReload = false
@@ -590,7 +598,13 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
                     adAttempts++
                     val last = lastTrackState
                     val how = AdRecoveryRules.stuck(adAttempts, playing = playing && !refused, mirrored = mirroring)
-                    if (how == AdRecoveryRules.Stuck.NEXT) {
+                    if (adCovered) {
+                        // The next song plays from the phone: the page only has to get past the ad.
+                        adReloaded = true
+                        muteUntilSong = true
+                        bridge.logger?.invoke("ad stuck on ${ad?.item?.name}: reloading the player, the phone plays meanwhile (attempt $adAttempts)")
+                        if (reloadHost != null) reloadAndPlayOn(null)
+                    } else if (how == AdRecoveryRules.Stuck.NEXT) {
                         bridge.logger?.invoke("ad stuck on ${ad?.item?.name}: playing the next song (attempt $adAttempts)")
                         last?.let { runCatching { playOn(it) } }
                     } else if (how == AdRecoveryRules.Stuck.RELOAD_ONLY) {
@@ -1088,6 +1102,7 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
                 adSince = System.currentTimeMillis()
                 adMuteTries = 0
                 bridge.logger?.invoke("ad break started")
+                adCovered = false
                 app.myspoti.spotify.report.Refusal402.adBreak()
                 // A song picked a moment ago and not playing yet: the ad came in its place.
                 val p = lastPlay
@@ -1101,7 +1116,11 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
             adState = s
             adStateAt = System.currentTimeMillis()
             if (!_adPlaying.value) wake.trySend(Unit)
+            val starting = !_adPlaying.value
             _adPlaying.value = true
+            // No song picked waiting on it, the page not mirroring: the phone covers the break.
+            if (starting && pickBeforeAd == null && !mirroring && !remoteActive)
+                adCovered = runCatching { adCover?.invoke() == true }.getOrDefault(false)
             intent = intent?.copy(adSeen = true)
             _state.value = lastTrackState?.copy(isBuffering = true) ?: s.copy(item = null)
             showIntent()
@@ -1148,7 +1167,7 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         // pressed. The page can leave the song it moves on to paused when the ad's audio was
         // refused. Nobody paused (a pause is [pausedByUser]), so the song is resumed once the
         // state has settled, unless something else was played or picked meanwhile.
-        if (adJustEnded && s?.item != null && s.isPaused && !pausedByUser && s.item?.kind != ItemKind.AD) {
+        if (adJustEnded && !adCovered && s?.item != null && s.isPaused && !pausedByUser && s.item?.kind != ItemKind.AD) {
             val playedAt = lastPlay?.third
             val uri = s.item?.uri
             scope.launch {
