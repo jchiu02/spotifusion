@@ -27,10 +27,10 @@ object LocalPlayer {
     var contextUri: String = ""
         private set
     @Volatile var fallbackMode: Boolean = false
+        private set
     /** Covering a Spotify stall with the saved copy: the song after it goes back to Spotify. */
     @Volatile private var rescue = false
     val rescuing: Boolean get() = rescue
-        private set
     private var exo: ExoPlayer? = null
 
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
