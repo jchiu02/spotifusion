@@ -424,14 +424,14 @@ object OfflineDownloader {
             YouTubeSource.searchCandidates(query, YoutubeSearchQueryHandlerFactory.MUSIC_SONGS)
         }.getOrDefault(emptyList())
 
-        pickBestBitChordHit(meta, songHits, minScore = 40, maxDurDiffSec = 35L)?.let { return it.url }
+        pickBestBitChordHit(meta, songHits, minScore = 40, maxDurDiffSec = 4L)?.let { return it.url }
 
         // Fallback to official audio on YouTube VIDEOS (still filtered by BitChord's version/duration rules)
         YouTubeSource.findAudio(meta.title, meta.artist, meta.durationMs)?.let { return it.url }
         val videoHits = runCatching {
             YouTubeSource.searchCandidates("$query official audio", YoutubeSearchQueryHandlerFactory.VIDEOS)
         }.getOrDefault(emptyList())
-        pickBestBitChordHit(meta, videoHits, minScore = 38, maxDurDiffSec = 45L)?.let { return it.url }
+        pickBestBitChordHit(meta, videoHits, minScore = 50, maxDurDiffSec = 3L)?.let { return it.url }
 
         // Final relaxed fallback search on YouTube VIDEOS for indie/regional/untagged tracks
         val plainVideoHits = runCatching {

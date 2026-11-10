@@ -134,8 +134,24 @@ object YouTubeSource {
         return hits.firstOrNull { h ->
             val nameOk = titleMatches(h.name, title)
             val durOk = durationMs <= 0 || kotlin.math.abs(h.durationSec * 1000 - durationMs) <= 3000
-            nameOk && durOk && sameArtist(h, main)
+            nameOk && durOk && sameArtist(h, main) && !otherVersion(h.name, title)
         }
+    }
+
+    /**
+     * A version that is not the record: a music video, live, pitched or slowed re-upload…
+     * Reported: saved songs that sounded like music videos or at a different pitch. A word the
+     * Spotify title itself has ("Live", "Remix", "Radio Edit") does not count against it.
+     */
+    private val notTheRecord = Regex(
+        "(?i)\\b(lyrics?|paroles|cover|remix|reaction|karaok[eé]|slowed|sped ?up|speed ?up|nightcore|daycore|" +
+            "pitch(?:ed)?|reverb|bass ?boost(?:ed)?|8d|instrumentale?|extended|tutorial|piano|guitar|live|concert|" +
+            "session|acoustic|mashup|medley|edit|tiktok|loop|hour|official (?:music )?video|music video|video ?clip|" +
+            "clip|visuali[sz]er|vid[eé]o)\\b")
+
+    private fun otherVersion(candidate: String, title: String): Boolean {
+        val own = folded(title)
+        return notTheRecord.findAll(candidate).any { m -> !own.contains(folded(m.value)) }
     }
 
     private val excluded = Regex("""(?i)\b(lyrics?|paroles|cover|remix|reaction|karaok[eé]|slowed|sped ?up|nightcore|8d|instrumentale?|extended|tutorial|piano|guitar)\b""")
@@ -177,9 +193,13 @@ object YouTubeSource {
     fun findAudio(title: String, artist: String, durationMs: Long): Hit? {
         val main = artist.substringBefore(",").trim()
         val hits = search("$title $main audio", YoutubeSearchQueryHandlerFactory.VIDEOS)
+        val a = norm(main)
         return hits.firstOrNull { h ->
-            titleMatches(h.name, title) && !excluded.containsMatchIn(h.name) &&
-                durationMs > 0 && kotlin.math.abs(h.durationSec * 1000 - durationMs) <= 2500
+            // The artist's own upload (their channel, "- Topic", VEVO, or named in the title), the
+            // plain record only, and the record's length within 2 s.
+            val artistOk = a.isNotEmpty() && (sameArtist(h, main) || norm(h.uploader).contains(a) || norm(h.name).contains(a))
+            titleMatches(h.name, title) && artistOk && !otherVersion(h.name, title) &&
+                durationMs > 0 && kotlin.math.abs(h.durationSec * 1000 - durationMs) <= 2000
         }
     }
 
