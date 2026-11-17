@@ -396,15 +396,22 @@ object SongPlayer {
      * page reloads past the ad in the background; the song after it streams again. True when covered.
      */
     fun coverAd(pickedId: String?): Boolean {
-        if (LocalPlayer.active.value || _activeDevice.value != null || !userWantsPlaying) return false
+        if (_activeDevice.value != null) return false
+        // A pick during an ad replaces whatever the phone was covering it with.
+        if (LocalPlayer.active.value && pickedId == null) return false
         // Reported: an ad after picking a song played another song. The song wanted is the one
         // picked (the ad came in its place, or it was picked a moment ago), else the next one.
         val plan = QueuePreloader.plan
         val justPicked = SystemClock.elapsedRealtime() - userMovedAt < 20_000 && currentTrackId.isNotBlank()
         val nextId = pickedId?.takeIf { it.isNotBlank() }
             ?: currentTrackId.takeIf { justPicked }
-            ?: plan.indexOf(currentTrackId).takeIf { it >= 0 }?.let { plan.getOrNull(it + 1) }
-        val saved = nextId?.let(::savedLocal) ?: return false
+            ?: plan.indexOf(currentTrackId).let { at -> plan.getOrNull(if (at >= 0) at + 1 else 1) }
+        val saved = nextId?.let(::savedLocal)
+        if (saved == null) {
+            app.myspoti.host.android.Logbook.log("ad: ${if (nextId == null) "no song known to come" else "$nextId not saved"}, nothing from the phone")
+            return false
+        }
+        userWantsPlaying = true
         val ctx = currentContextUri
         app.myspoti.host.android.Logbook.log("ad: ${saved.title} plays from this phone meanwhile")
         main.post {
@@ -478,15 +485,19 @@ object SongPlayer {
      */
     fun afterRescue(by: Int) {
         rescueMode = false
-        val plan = QueuePreloader.plan
+        // The list the song was picked in (a pick during an ad comes from another list than the
+        // one playing before), else the planned one.
+        val picked = lastRequestedContextUri.takeIf { it.isNotBlank() }
+            ?.let { c -> QueuePreloader.playlistIds(c)?.takeIf { currentTrackId in it }?.let { c to it } }
+        val plan = picked?.second ?: QueuePreloader.plan
         val at = plan.indexOf(currentTrackId)
         val target = if (at >= 0) plan.getOrNull(at + by) else null
         if (!com.music.spotui.data.NetProbe.online()) {
             if (!skipOffline(by)) LocalPlayer.stop()
             return
         }
-        val ctx = currentContextUri
-        app.myspoti.host.android.Logbook.log("signal good again: back to streaming")
+        val ctx = picked?.first ?: currentContextUri
+        app.myspoti.host.android.Logbook.log("back to streaming${target?.let { ": $it" } ?: ""}")
         if (target != null) {
             playSong(SPOTIFY_TRACK_PREFIX + target, contextUri = ctx.ifBlank { null })
         } else {

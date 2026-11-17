@@ -637,7 +637,7 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
                 continue
             }
             // A song really playing again: the ad break is over.
-            if (s != null && !s.isPaused && !s.isBuffering) { adAttempts = 0; adReloaded = false }
+            if (s != null && !s.isPaused && !s.isBuffering) { adAttempts = 0; adReloaded = false; pickBeforeAd = null }
             // Another device of the account plays (Spotify Connect, the desktop app): the state is
             // its, followed and never repaired. A stall judged on its clock — "past the end" on a
             // state that came a moment late, "buffering" on its report — was answered with a seek or
@@ -1037,7 +1037,9 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
         if (playIntent()) return
         // Or picked one during the ad that is being got past: that one, in the order it was picked.
         pickBeforeAd?.takeIf { System.currentTimeMillis() - it.at < PICK_REPLAY_MS }?.let { pick ->
-            pickBeforeAd = null
+            // Reported: a song picked during an ad, the ad stayed, and the next tries played the
+            // song after the old one instead. The pick is kept until a real song plays.
+            if (!_adPlaying.value) pickBeforeAd = null
             bridge.logger?.invoke("playing the song picked during the ad: ${pick.track ?: pick.context}")
             playNow(pick.context, trackUri = pick.track, index = pick.index, positionMs = pick.positionMs, order = pick.order, refusable = true)
             return
@@ -1558,6 +1560,15 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
             lastOrder = order?.let { contextUri to it }
             pausedByUser = false
             pickBeforeAd = Pick(contextUri, trackUri, System.currentTimeMillis(), order, positionMs, index)
+            // Saved on the phone: it plays from there now; the page only has to get past the ad.
+            if (!mirroring && !remoteActive && trackUri != null &&
+                runCatching { adCover?.invoke(trackUri.toString().substringAfterLast(':')) == true }.getOrDefault(false)) {
+                adCovered = true
+                pickBeforeAd = null
+                bridge.logger?.invoke("pick during an ad: $trackUri plays from the phone at once")
+                wake.trySend(Unit)
+                return
+            }
             bridge.logger?.invoke("pick during an ad: ${trackUri ?: contextUri} held, the ad is got past at once")
             wake.trySend(Unit)
             return
