@@ -244,7 +244,7 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
      * Set by the app: at an ad break, plays the next song from the phone (saved) meanwhile; true
      * when it does. The page is then reloaded past the ad with nothing played on it.
      */
-    @Volatile var adCover: (() -> Boolean)? = null
+    @Volatile var adCover: ((pickedTrackId: String?) -> Boolean)? = null
     /** The current ad break is covered by [adCover]: nothing is played on the page after it. */
     @Volatile private var adCovered = false
 
@@ -1126,9 +1126,13 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
             if (!_adPlaying.value) wake.trySend(Unit)
             val starting = !_adPlaying.value
             _adPlaying.value = true
-            // No song picked waiting on it, the page not mirroring: the phone covers the break.
-            if (starting && pickBeforeAd == null && !mirroring && !remoteActive)
-                adCovered = runCatching { adCover?.invoke() == true }.getOrDefault(false)
+            // The page not mirroring: the phone covers the break with the song wanted (the one
+            // picked, else the next one) when it is saved. A covered pick is not asked again.
+            if (starting && !mirroring && !remoteActive) {
+                val pickId = pickBeforeAd?.track?.toString()?.substringAfterLast(':')
+                adCovered = runCatching { adCover?.invoke(pickId) == true }.getOrDefault(false)
+                if (adCovered) pickBeforeAd = null
+            }
             intent = intent?.copy(adSeen = true)
             _state.value = lastTrackState?.copy(isBuffering = true) ?: s.copy(item = null)
             showIntent()

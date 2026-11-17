@@ -7,6 +7,8 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import app.myspoti.api.ItemKind
 import app.myspoti.api.MyspotiApi
 import app.myspoti.api.PlayerState
@@ -332,7 +334,7 @@ object SongPlayer {
     }
 
     // ── Bad signal (online but too slow): the saved copy covers the stall ──
-    private const val STALL_RESCUE_MS = 2_000L
+    private const val STALL_RESCUE_MS = 600L
     private var stuckSince = 0L
     @Volatile private var adChangedAt = 0L
     /** The song the silence rescue already moved on from (once per song, no repeated toasts). */
@@ -342,21 +344,21 @@ object SongPlayer {
         private set
     private val stallWatch = object : Runnable {
         override fun run() {
-            main.postDelayed(this, 1_000)
+            main.postDelayed(this, 200)
             runCatching {
                 if (MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.adCover == null)
-                    MyspotiRuntime.spotify.player.adCover = { coverAd() }
+                    MyspotiRuntime.spotify.player.adCover = { picked -> coverAd(picked) }
                 val now = SystemClock.elapsedRealtime()
                 // The phone's own player wants to play and is stuck loading: silence, recovered.
                 if (LocalPlayer.active.value && LocalPlayer.stuck() && now - localStartedAt > 2_000) {
                     if (localStuckSince == 0L) localStuckSince = now
-                    else if (now - localStuckSince >= 3_000) onLocalSilence("stuck loading 3 s")
+                    else if (now - localStuckSince >= 1_000) onLocalSilence("stuck loading 1 s")
                 } else localStuckSince = 0L
                 val engine = MyspotiRuntime.isStarted
                 val stuck = engine && !LocalPlayer.active.value && userWantsPlaying && !adState.value &&
                     _activeDevice.value == null && currentTrackId.isNotBlank() &&
                     // Not straight after a pick or a seek: Spotify loading a new song is not a stall.
-                    now - userMovedAt > 3_000 &&
+                    now - userMovedAt > 2_500 &&
                     // Nor the page getting past an ad (it reloads, then plays on by itself).
                     now - adChangedAt > 20_000 &&
                     (isBuffering || MyspotiRuntime.spotify.player.stalled.value)
@@ -374,14 +376,14 @@ object SongPlayer {
                     // ...else, with no signal, the next saved song plays now instead of the silence.
                     if (!com.music.spotui.data.NetProbe.online() && silenceSkippedFor != id) {
                         silenceSkippedFor = id
-                        app.myspoti.host.android.Logbook.log("silence ${STALL_RESCUE_MS / 1000}s with no signal, this song not saved: the next saved song plays")
+                        app.myspoti.host.android.Logbook.log("silence ${STALL_RESCUE_MS} ms with no signal, this song not saved: the next saved song plays")
                         skipOffline(1)
                     }
                     return@runCatching
                 }
                 val from = getCurrentPosition()
                 val ctx = currentContextUri
-                app.myspoti.host.android.Logbook.log("weak signal: Spotify stuck ${STALL_RESCUE_MS / 1000}s: ${saved.title} goes on from this phone at ${from / 1000}s")
+                app.myspoti.host.android.Logbook.log("weak signal: Spotify stuck ${STALL_RESCUE_MS} ms: ${saved.title} goes on from this phone at ${from / 1000}s")
                 rescueMode = true
                 LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true)
                 if (from > 0) LocalPlayer.seekTo(from)
@@ -393,11 +395,15 @@ object SongPlayer {
      * An ad break started: the next song plays at once from the phone when it is saved, while the
      * page reloads past the ad in the background; the song after it streams again. True when covered.
      */
-    fun coverAd(): Boolean {
+    fun coverAd(pickedId: String?): Boolean {
         if (LocalPlayer.active.value || _activeDevice.value != null || !userWantsPlaying) return false
+        // Reported: an ad after picking a song played another song. The song wanted is the one
+        // picked (the ad came in its place, or it was picked a moment ago), else the next one.
         val plan = QueuePreloader.plan
-        val at = plan.indexOf(currentTrackId)
-        val nextId = if (at >= 0) plan.getOrNull(at + 1) else null
+        val justPicked = SystemClock.elapsedRealtime() - userMovedAt < 20_000 && currentTrackId.isNotBlank()
+        val nextId = pickedId?.takeIf { it.isNotBlank() }
+            ?: currentTrackId.takeIf { justPicked }
+            ?: plan.indexOf(currentTrackId).takeIf { it >= 0 }?.let { plan.getOrNull(it + 1) }
         val saved = nextId?.let(::savedLocal) ?: return false
         val ctx = currentContextUri
         app.myspoti.host.android.Logbook.log("ad: ${saved.title} plays from this phone meanwhile")
@@ -407,6 +413,15 @@ object SongPlayer {
             LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true)
         }
         return true
+    }
+
+    /** Settings > Play saved songs first: a saved song plays from the phone even online. */
+    var preferSaved by androidx.compose.runtime.mutableStateOf(
+        Graph.app.getSharedPreferences("playback_prefs", android.content.Context.MODE_PRIVATE).getBoolean("prefer_saved", false))
+        private set
+    fun choosePreferSaved(on: Boolean) {
+        preferSaved = on
+        Graph.app.getSharedPreferences("playback_prefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("prefer_saved", on).apply()
     }
 
     /** Playing saved songs because the signal went (not because Spotify refused a song). */
@@ -1034,13 +1049,15 @@ object SongPlayer {
 
         // Streams first: a saved copy plays only with no internet (or Data Saver on). Reported:
         // saved songs played from the phone even on a good connection, at lower quality.
-        if (isOffline) {
+        if (isOffline || (preferSaved && episodeId == null && (offlineTrack != null || cachedTrack != null))) {
             val primaryLocal = offlineTrack?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
                 ?: cachedTrack?.let(com.music.spotui.data.cache.PlaybackCacheStore::toLocalTrack)
 
             if (primaryLocal != null) {
                 val localQueue = mutableListOf(primaryLocal)
-                order?.forEach { uri ->
+                // Online with "Play saved songs first": one song at a time, so the list keeps its
+                // order (each next song saved plays from the phone, the others stream).
+                if (isOffline) order?.forEach { uri ->
                     val id = uri.removePrefix("spotify:track:")
                     if (id != trackId) {
                         val off = com.music.spotui.data.offline.OfflineStore.tracks[id]?.let(com.music.spotui.data.offline.OfflineStore::toLocalTrack)
@@ -1052,7 +1069,7 @@ object SongPlayer {
                 val ctx = contextUri ?: (if (standalone) null else contextRegistry[song]) ?: ""
                 val ctxName = knownContextName(ctx).ifBlank { context?.let { "Cache / Local" } }
                 currentTrackId = trackId
-                offlineFallback = true
+                offlineFallback = isOffline
                 if (Looper.myLooper() == Looper.getMainLooper()) LocalPlayer.play(localQueue, 0, context = ctxName, contextUri = ctx, fallback = true) else main.post { LocalPlayer.play(localQueue, 0, context = ctxName, contextUri = ctx, fallback = true) }
                 return
             } else if (isOffline) {
@@ -1212,6 +1229,15 @@ object SongPlayer {
 
     /** Advances to the next/previous track in [boundState]'s queue when playing in BitChord fallback mode. */
     fun advanceFallbackQueue(delta: Int) {
+        if (preferSaved && !offlineFallback && com.music.spotui.data.NetProbe.online()) {
+            val plan = QueuePreloader.plan
+            val at = plan.indexOf(currentTrackId)
+            val target = if (at >= 0) plan.getOrNull(at + delta) else null
+            if (target != null) {
+                playSong(SPOTIFY_TRACK_PREFIX + target, contextUri = currentContextUri.ifBlank { null })
+                return
+            }
+        }
         val st = boundState ?: return
         val q = st.queue.value
         if (q.isEmpty()) return
@@ -1236,7 +1262,7 @@ object SongPlayer {
         currentTrackId = tId
         // Reported: offline for a few minutes, then an hour of YouTube Music songs (with silences)
         // though the signal was back: the list went on there for good. Online again, it streams.
-        if (offlineFallback && tId.isNotBlank() && com.music.spotui.data.NetProbe.online()) {
+        if ((offlineFallback || preferSaved) && tId.isNotBlank() && com.music.spotui.data.NetProbe.online()) {
             app.myspoti.host.android.Logbook.log("signal back: ${nextSong.title} streams from Spotify again")
             offlineFallback = false
             playSong(SPOTIFY_TRACK_PREFIX + tId, contextUri = currentContextUri.ifBlank { null })

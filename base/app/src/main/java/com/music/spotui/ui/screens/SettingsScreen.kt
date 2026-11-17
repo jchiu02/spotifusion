@@ -440,6 +440,12 @@ private fun PlaybackCachingSection() {
         CacheCapRow()
         ClearCacheRow()
     }
+    OptionRow(
+        label = "Play saved songs first",
+        detail = "A song saved on this phone plays from the phone, even with signal: no buffering, no ads on it. Songs not saved stream.",
+        checked = com.music.spotui.di.SongPlayer.preferSaved,
+        onChecked = { com.music.spotui.di.SongPlayer.choosePreferSaved(it) },
+    )
     Divider()
 }
 
