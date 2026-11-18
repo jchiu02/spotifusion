@@ -142,6 +142,9 @@ class ContextViewModel(
                     val first = flow.first { it !is Response.Loading }
                     if (first is Response.Success) {
                         recent[key] = first
+                        // On disk too: openable with no internet.
+                        if (first.data.complete || !com.music.spotui.data.api.ScreenCache.hasPage(key))
+                            com.music.spotui.data.api.ScreenCache.writePage(key, first.data)
                         // The hearts are known before the page opens.
                         val p = first.data
                         if (p.type != "liked" && p.type != "liked-artist") SongPlayer.libraryContains(
@@ -186,6 +189,12 @@ class ContextViewModel(
         recent[key]?.let { _page.value = it }
         val pending = inflight[key]
         viewModelScope.launch(Dispatchers.IO) {
+            // Reported: no internet, and the lists on Home could not be opened. The copy kept on
+            // disk shows at once; the network refreshes it when there is one.
+            val k0 = key!!
+            if (_page.value !is Response.Success) com.music.spotui.data.api.ScreenCache.readPage(k0)?.let {
+                if (_page.value !is Response.Success) { _page.value = Response.Success(it); recent[k0] = Response.Success(it) }
+            }
             // Touched a moment ago: join that look-up instead of sending a second one.
             if (pending != null && _page.value !is Response.Success) {
                 runCatching { pending.await() }
@@ -229,9 +238,12 @@ class ContextViewModel(
             }
             flow.collect { r ->
                 if (r is Response.Loading && _page.value is Response.Success) return@collect
+                // No internet: the copy on screen stays instead of an error.
+                if (r is Response.Error && _page.value is Response.Success) return@collect
                 _page.value = r
                 if (r is Response.Success) {
                     recent[key!!] = r
+                    if (r.data.complete && r.data.tracks.isNotEmpty()) com.music.spotui.data.api.ScreenCache.writePage(key!!, r.data)
                     val p = r.data
                     // Check saved state on the first page and again once complete.
                     if ((savedChecked == 0 && p.tracks.isNotEmpty()) || (p.complete && savedChecked < 2)) {

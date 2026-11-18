@@ -171,8 +171,9 @@ fun HomeFeedContent(navController: NavController, feed: HomeFeedModel, facet: St
     val gridSection = sections.firstOrNull()?.takeIf { it.title.isBlank() }
     val carousels = if (gridSection != null) sections.drop(1) else sections
     // The shortcuts at the top load in the background, ready before a tap.
+    // Every list on Home is loaded quietly and kept on disk, so it opens with no internet too.
     androidx.compose.runtime.LaunchedEffect(gridSection?.items?.map { it.name }) {
-        val top = gridSection?.items.orEmpty().take(8).mapNotNull { item ->
+        val top = (gridSection?.items.orEmpty() + carousels.flatMap { it.items.take(10) }).take(60).mapNotNull { item ->
             when (item) {
                 is HomeItem.Album -> item.id.takeIf { it.isNotBlank() }?.let { "album" to it }
                 is HomeItem.Playlist -> item.id.takeIf { it.isNotBlank() }?.let { "playlist" to it }

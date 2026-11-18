@@ -57,6 +57,17 @@ object ScreenCache {
         }
     }
 
+    /**
+     * Playlist and album pages, so a list opened (or shown on Home or in the library) can be
+     * opened again with no internet. Key: "<type>:<id>".
+     */
+    private val pageSerializer = com.music.spotui.data.entity.ContextPageModel.serializer()
+    private fun pageEntry(key: String) =
+        Entry("page_" + key.replace(Regex("[^A-Za-z0-9_-]"), "_"), pageSerializer)
+    fun readPage(key: String): com.music.spotui.data.entity.ContextPageModel? = pageEntry(key).read()
+    fun hasPage(key: String): Boolean = File(dir, "page_" + key.replace(Regex("[^A-Za-z0-9_-]"), "_") + ".json").exists()
+    fun writePage(key: String, page: com.music.spotui.data.entity.ContextPageModel) = pageEntry(key).write(page)
+
     /** Logout / account switch. */
     fun clear() { io.launch { dir.listFiles()?.forEach { it.delete() } } }
 }

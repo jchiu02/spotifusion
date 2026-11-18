@@ -115,7 +115,8 @@ fun LibraryScreen(navController: NavController) {
     val entries by libraryViewModel.entries.collectAsState()
     // The first lists of the library load in the background, ready before a tap.
     androidx.compose.runtime.LaunchedEffect((entries as? Response.Success)?.data?.take(8)?.map { it.spotifyId }) {
-        val top = (entries as? Response.Success)?.data.orEmpty().take(8).mapNotNull { e ->
+        // All the library's lists, kept on disk to open with no internet (the first ones first).
+        val top = (entries as? Response.Success)?.data.orEmpty().take(80).mapNotNull { e ->
             when {
                 e.isFolder || e.spotifyId.startsWith(LOCAL_PLAYLIST_PREFIX) -> null
                 e.spotifyId in setOf(Api.HomeCache.LOCAL_FILES_ID, Api.HomeCache.DOWNLOADS_ID, Api.HomeCache.SAVED_OFFLINE_ID, Api.HomeCache.EPISODES_ID) -> null
