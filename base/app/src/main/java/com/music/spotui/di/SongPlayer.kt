@@ -337,6 +337,10 @@ object SongPlayer {
     private const val STALL_RESCUE_MS = 600L
     private var stuckSince = 0L
     @Volatile private var adChangedAt = 0L
+    /** The song last asked for (picked, skipped to) and when: what a rescue must play. */
+    @Volatile private var wantedTrackId = ""
+    @Volatile private var wantedContext = ""
+    @Volatile private var wantedAt = 0L
     /** The song the silence rescue already moved on from (once per song, no repeated toasts). */
     @Volatile private var silenceSkippedFor = ""
     /** The song playing from the phone because Spotify stalled; Spotify takes the next song back. */
@@ -370,7 +374,10 @@ object SongPlayer {
                 stuckSince = 0L
                 // Reported: strong signal, then walking out of it, and silence. Whatever the signal
                 // says: the song goes on from the phone when it is saved there...
-                val id = currentTrackId
+                // Reported: Timeless picked, Spotify stuck, and the song from before (Often) played
+                // from the phone. A song just picked is the one rescued, from its start.
+                val picked = wantedTrackId.takeIf { it.isNotBlank() && it != currentTrackId && now - wantedAt < 30_000 }
+                val id = picked ?: currentTrackId
                 val saved = savedLocal(id)
                 if (saved == null) {
                     // ...else, with no signal, the next saved song plays now instead of the silence.
@@ -381,8 +388,9 @@ object SongPlayer {
                     }
                     return@runCatching
                 }
-                val from = getCurrentPosition()
-                val ctx = currentContextUri
+                val from = if (picked != null) 0L else getCurrentPosition()
+                val ctx = if (picked != null) wantedContext.ifBlank { currentContextUri } else currentContextUri
+                currentTrackId = id
                 app.myspoti.host.android.Logbook.log("weak signal: Spotify stuck ${STALL_RESCUE_MS} ms: ${saved.title} goes on from this phone at ${from / 1000}s")
                 rescueMode = true
                 LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true)
@@ -1053,6 +1061,7 @@ object SongPlayer {
         val episodeId = song.removePrefix("episode:").takeIf { song.startsWith("episode:") }
         val trackId = episodeId ?: spotifyTrackIdForPlayback(song) ?: return
         val itemUri = if (episodeId != null) "spotify:episode:$episodeId" else SPOTIFY_TRACK_PREFIX + trackId
+        if (episodeId == null) { wantedTrackId = trackId; wantedContext = contextUri.orEmpty(); wantedAt = SystemClock.elapsedRealtime() }
 
         val isOffline = !com.music.spotui.data.NetProbe.online(appCtx) || com.music.spotui.data.DataSaver.active
         val offlineTrack = if (episodeId == null) com.music.spotui.data.offline.OfflineStore.tracks[trackId] else null

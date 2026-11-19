@@ -320,6 +320,8 @@ internal class ControlRelay(private val view: WebView, private val fingerprint: 
         if (steady != null && it.code in 200..299) Logbook.logEvery("relay $method $steady", 60_000, "relay $method $path -> ${it.code} in $net ms")
         else Logbook.log("relay $method $path -> ${it.code} in $net ms")
         if (it.code >= 400) Logbook.log("relay error body: ${text.take(400)}")
+        if (it.code == 404 && text.contains("DEVICE_NOT_FOUND") && (path.contains("/player/command") || path.contains("/connect/transfer")))
+            app.myspoti.spotify.bridge.PageDevice.notFound()
         if (it.code in 200..299 && method == "POST" && url.substringBefore('?').endsWith("/track-playback/v1/devices")) onDeviceRegistered?.invoke()
         if (it.code == 402 && !(COMMAND.containsMatchIn(url) || registration)) logRefusal(it, body)
         if (registration) Regex("\"effective_license\"\\s*:\\s*\"([^\"]*)\"").find(text)

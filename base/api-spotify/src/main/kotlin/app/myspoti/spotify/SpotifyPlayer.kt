@@ -173,6 +173,22 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
     private val wake = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
 
     init {
+        // Reported: the phone's device was dropped by Spotify (the app idle a while); every play
+        // was answered "No such device" and nothing played. The page is loaded again (its device
+        // joins anew) and the song last asked for is played there.
+        scope.launch {
+            var lastFix = 0L
+            app.myspoti.spotify.bridge.PageDevice.lost.collect {
+                val now = System.currentTimeMillis()
+                if (now - lastFix < 20_000) return@collect
+                lastFix = now
+                val last = lastPlay
+                bridge.logger?.invoke("the phone's device is gone from Spotify: reloading the player")
+                if (last != null && now - last.third < 30_000)
+                    pickAfterReload = Pick(last.first, last.second, now, lastOrder?.takeIf { it.first == last.first }?.second, index = lastIndex)
+                if (reloadPage()) playPickAfterReload()
+            }
+        }
         scope.launch {
             bridge.events.collect { (type, payload) ->
                 when (type) {

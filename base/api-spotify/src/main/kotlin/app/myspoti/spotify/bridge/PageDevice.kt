@@ -22,6 +22,17 @@ object PageDevice {
     /** The page's device joined Spotify Connect (its connect-state PUT was answered 2xx). */
     fun joined() { reported = true; _joined.value = true }
 
+    private val _lost = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    /** The page's device, joined before, was dropped by Spotify (commands answered DEVICE_NOT_FOUND). */
+    val lost: kotlinx.coroutines.flow.SharedFlow<Unit> = _lost
+
+    /** A command to the page's device was answered DEVICE_NOT_FOUND. */
+    fun notFound() {
+        // Before the first join it is the start-up race, waited for elsewhere; after it, the
+        // device is gone (seen after the app sat idle: every play 404, nothing played).
+        if (_joined.value) { _joined.value = false; _lost.tryEmit(Unit) }
+    }
+
     /** The page is going away (a reload asked for or started): its device is not one to command. */
     fun pageGone() { _joined.value = false }
 }
