@@ -40,7 +40,8 @@ object LyricsApi {
         val durationMs: Long,
         val coverUrl: String = "",
     ) {
-        val key: String get() = trackId.ifBlank { "${title.lowercase()}|${artist.substringBefore(",").trim().lowercase()}" }
+        // The title too: an id that was not the song's never files its lyrics under that song.
+        val key: String get() = trackId + "|" + "${title.lowercase()}|${artist.substringBefore(",").trim().lowercase()}"
     }
 
     // Cache by track: re-opening the lyrics (card + full screen ask for the same

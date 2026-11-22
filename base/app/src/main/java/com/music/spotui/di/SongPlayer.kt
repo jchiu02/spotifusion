@@ -1510,8 +1510,14 @@ object SongPlayer {
         val st = boundState ?: return null
         val title = st.title.value
         if (title.isBlank()) return null
+        // Reported: Ladbroke Grove showing another song's lyrics. The id is the one of the song on
+        // screen (the phone's player's own song, else Spotify's state), not [currentTrackId],
+        // which a rescue or an ad cover can leave on another song for a moment.
+        val id = (if (LocalPlayer.active.value) LocalPlayer.current()?.let(::spotifyIdOf) else null)
+            ?: trackIdOf(_nowPlaying.value.uri).ifBlank { null }
+            ?: currentTrackId
         return com.music.spotui.data.api.LyricsApi.Track(
-            trackId = currentTrackId, title = title, artist = st.singer.value, album = st.album.value,
+            trackId = id, title = title, artist = st.singer.value, album = st.album.value,
             durationMs = durationMs, coverUrl = st.coverUri.value,
         )
     }
