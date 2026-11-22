@@ -83,6 +83,9 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
     @Volatile private var adMuteTries = 0
     /** A pause asked through [pause]; it holds until playback is asked for again, never expires. */
     @Volatile private var pausedByUser = false
+    /** When the page's media element was last seen moving (sound really coming out). */
+    @Volatile var soundMovedAt = 0L
+        private set
     /** The order given to the last [play] (context uri to songs), kept for a stall restart. */
     @Volatile private var lastOrder: Pair<Uri, List<Uri>>? = null
 
@@ -184,9 +187,15 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
                 lastFix = now
                 val last = lastPlay
                 bridge.logger?.invoke("the phone's device is gone from Spotify: reloading the player")
-                if (last != null && now - last.third < 30_000)
+                val wasPlaying = lastTrackState?.let { !it.isPaused } == true && !pausedByUser
+                if (last != null && now - last.third < 30_000) {
                     pickAfterReload = Pick(last.first, last.second, now, lastOrder?.takeIf { it.first == last.first }?.second, index = lastIndex)
-                if (reloadPage()) playPickAfterReload()
+                    if (reloadPage()) playPickAfterReload()
+                } else if (wasPlaying) {
+                    // Reported: it randomly stopped. No song asked for just now: the song that was
+                    // playing goes on where it was after the reload.
+                    reloadAndPlayOn(lastTrackState, next = false)
+                } else reloadPage()
             }
         }
         scope.launch {
@@ -670,6 +679,7 @@ class SpotifyPlayer(private val bridge: Bridge, private val scope: CoroutineScop
             val playingHere = heardHere && !fading
             val moved = media != null && !media.paused && kotlin.math.abs(media.time - lastMediaTime) > 0.25
             lastMediaTime = media?.time ?: -1.0
+            if (moved) soundMovedAt = now
             silentSince = if (playingHere && !moved) (if (silentSince == 0L) now else silentSince) else 0L
             // Reported: the clock counted on while nothing was heard. Still over one tick and
             // waiting for data (or paused) is a stall at once; still over two, whatever the element

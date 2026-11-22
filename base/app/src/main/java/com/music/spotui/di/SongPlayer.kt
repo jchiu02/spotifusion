@@ -282,7 +282,10 @@ object SongPlayer {
                 // Reported: internet lost, and the next song came before this one had finished.
                 // The page says "buffering" as soon as it cannot fetch more, while what it has
                 // buffered still plays: only the sound really stopping (the element still) counts.
-                val silent = MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.stalled.value
+                // Reported after that: it randomly stopped — "still" is not judged while the page says
+                // buffering, so a real stop was never seen. Silent: still, or buffering with the
+                // sound not seen moving for 1.5 s.
+                val silent = soundStopped(now)
                 stuckSince = if (silent) (if (stuckSince == 0L) now else stuckSince) else 0L
                 val atEnd = durationMs > 0 && getCurrentPosition() >= durationMs - 1_000
                 if (atEnd || (stuckSince != 0L && now - stuckSince >= FOLLOW_STUCK_MS)) {
@@ -386,7 +389,7 @@ object SongPlayer {
                     // ...else, with no signal, the next saved song plays now instead of the silence.
                     // Only when the sound itself stopped (not the page's "buffering" alone): the
                     // part Spotify already buffered plays to its end first.
-                    val reallySilent = MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.stalled.value
+                    val reallySilent = soundStopped(now)
                     if (reallySilent && !com.music.spotui.data.NetProbe.online() && silenceSkippedFor != id) {
                         silenceSkippedFor = id
                         app.myspoti.host.android.Logbook.log("silence ${STALL_RESCUE_MS} ms with no signal, this song not saved: the next saved song plays")
@@ -487,6 +490,15 @@ object SongPlayer {
             app.myspoti.host.android.Logbook.log("phone's player silent ($why): next song")
             LocalPlayer.nextAndPlay()
         }
+    }
+
+    /** Spotify's sound really stopped: the element still, or buffering with no movement for 1.5 s. */
+    private fun soundStopped(now: Long): Boolean {
+        if (!MyspotiRuntime.isStarted) return isBuffering
+        val p = MyspotiRuntime.spotify.player
+        if (p.stalled.value) return true
+        val movedAt = p.soundMovedAt
+        return isBuffering && (movedAt == 0L || System.currentTimeMillis() - movedAt > 1_500)
     }
 
     private fun savedLocal(id: String) =
