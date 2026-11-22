@@ -279,7 +279,10 @@ object SongPlayer {
                 val now = SystemClock.elapsedRealtime()
                 // Offline the page can go on saying "playing, not buffering" while nothing is heard:
                 // the player's stall flag (its media element standing still) counts as well.
-                val silent = isBuffering || (MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.stalled.value)
+                // Reported: internet lost, and the next song came before this one had finished.
+                // The page says "buffering" as soon as it cannot fetch more, while what it has
+                // buffered still plays: only the sound really stopping (the element still) counts.
+                val silent = MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.stalled.value
                 stuckSince = if (silent) (if (stuckSince == 0L) now else stuckSince) else 0L
                 val atEnd = durationMs > 0 && getCurrentPosition() >= durationMs - 1_000
                 if (atEnd || (stuckSince != 0L && now - stuckSince >= FOLLOW_STUCK_MS)) {
@@ -381,7 +384,10 @@ object SongPlayer {
                 val saved = savedLocal(id)
                 if (saved == null) {
                     // ...else, with no signal, the next saved song plays now instead of the silence.
-                    if (!com.music.spotui.data.NetProbe.online() && silenceSkippedFor != id) {
+                    // Only when the sound itself stopped (not the page's "buffering" alone): the
+                    // part Spotify already buffered plays to its end first.
+                    val reallySilent = MyspotiRuntime.isStarted && MyspotiRuntime.spotify.player.stalled.value
+                    if (reallySilent && !com.music.spotui.data.NetProbe.online() && silenceSkippedFor != id) {
                         silenceSkippedFor = id
                         app.myspoti.host.android.Logbook.log("silence ${STALL_RESCUE_MS} ms with no signal, this song not saved: the next saved song plays")
                         skipOffline(1)

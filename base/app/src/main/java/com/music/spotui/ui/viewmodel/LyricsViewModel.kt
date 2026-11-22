@@ -51,7 +51,19 @@ class LyricsViewModel constructor() : ViewModel() {
         }
     }
 
-    private fun loadedState(lyrics: com.music.spotui.data.entity.Lyrics) = State.Loaded(
+    private fun loadedState(lyrics: com.music.spotui.data.entity.Lyrics): State.Loaded {
+        // For a report on lyrics out of time: where they came from, and where the sound comes from
+        // (a saved copy on the phone can be timed differently from Spotify's).
+        runCatching {
+            val local = com.music.spotui.di.LocalPlayer.active.value
+            app.myspoti.host.android.Logbook.log(
+                "lyrics: ${lyrics.lines.size} lines from ${lyrics.provider ?: "?"}, synced=${lyrics.synced}; sound from " +
+                    (if (local) "this phone (saved copy, ${com.music.spotui.di.LocalPlayer.duration() / 1000}s)" else "Spotify"))
+        }
+        return loadedStateOf(lyrics)
+    }
+
+    private fun loadedStateOf(lyrics: com.music.spotui.data.entity.Lyrics) = State.Loaded(
         lyrics = lyrics,
         sourceLanguage = lyrics.language,
         translationChecked = lyrics.language != null,
