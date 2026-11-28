@@ -7,6 +7,8 @@ on:
     branches: [master, main]
     tags: ["v*"]
   pull_request:
+  # A "Run workflow" button on the Actions page, for when a push starts no build.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -72,7 +74,7 @@ jobs:
       # sign-in (an artifact's link answers 404 to a phone that is not signed in):
       # https://github.com/<repo>/releases/download/latest-build/Spotifock.apk
       - name: Publish to the latest-build download
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
