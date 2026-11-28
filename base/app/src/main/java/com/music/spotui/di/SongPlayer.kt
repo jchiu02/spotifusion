@@ -343,6 +343,8 @@ object SongPlayer {
     private const val STALL_RESCUE_MS = 600L
     private var stuckSince = 0L
     @Volatile private var adChangedAt = 0L
+    private var seenUri = ""
+    private var seenUriAt = 0L
     /** The song last asked for (picked, skipped to) and when: what a rescue must play. */
     @Volatile private var wantedTrackId = ""
     @Volatile private var wantedContext = ""
@@ -365,7 +367,12 @@ object SongPlayer {
                     else if (now - localStuckSince >= 1_000) onLocalSilence("stuck loading 1 s")
                 } else localStuckSince = 0L
                 val engine = MyspotiRuntime.isStarted
+                // Reported: skipping to the next song played an old song (Formula) again and again —
+                // a new song loading was taken for a stall. No rescue in the 4 s after any song change.
+                val pageUri = _nowPlaying.value.uri
+                if (pageUri != seenUri) { seenUri = pageUri; seenUriAt = now }
                 val stuck = engine && !LocalPlayer.active.value && userWantsPlaying && !adState.value &&
+                    now - seenUriAt > 4_000 &&
                     _activeDevice.value == null && currentTrackId.isNotBlank() &&
                     // Not straight after a pick or a seek: Spotify loading a new song is not a stall.
                     now - userMovedAt > 2_500 &&
@@ -382,8 +389,11 @@ object SongPlayer {
                 // says: the song goes on from the phone when it is saved there...
                 // Reported: Timeless picked, Spotify stuck, and the song from before (Often) played
                 // from the phone. A song just picked is the one rescued, from its start.
-                val picked = wantedTrackId.takeIf { it.isNotBlank() && it != currentTrackId && now - wantedAt < 30_000 }
-                val id = picked ?: currentTrackId
+                // The song rescued is the one Spotify is on; a pick only when made after Spotify's
+                // last song change (it has not got there yet).
+                val pageId = trackIdOf(pageUri)
+                val picked = wantedTrackId.takeIf { it.isNotBlank() && it != pageId && now - wantedAt < 30_000 && wantedAt > seenUriAt }
+                val id = picked ?: pageId.ifBlank { currentTrackId }
                 val saved = savedLocal(id)
                 if (saved == null) {
                     // ...else, with no signal, the next saved song plays now instead of the silence.
