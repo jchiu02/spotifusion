@@ -255,6 +255,9 @@ object SongPlayer {
     /** Called when the phone's network goes away. */
     fun onNetworkLost() {
         netChangedAt = SystemClock.elapsedRealtime()
+        // Reported: losing connection gave a brief silence. The song, when saved, moves to the
+        // phone at once, while Spotify still plays what it buffered: nothing to hear.
+        main.post { seamlessHandover("network lost") }
         // Still offline at both checks: a mobile-data blip (a mast change, 4G to 5G) comes back
         // within a few seconds and must not move the music anywhere.
         main.postDelayed({
@@ -340,7 +343,7 @@ object SongPlayer {
     }
 
     // ── Bad signal (online but too slow): the saved copy covers the stall ──
-    private const val STALL_RESCUE_MS = 600L
+    private const val STALL_RESCUE_MS = 300L
     private var stuckSince = 0L
     @Volatile private var adChangedAt = 0L
     private var seenUri = ""
@@ -412,8 +415,10 @@ object SongPlayer {
                 currentTrackId = id
                 app.myspoti.host.android.Logbook.log("weak signal: Spotify stuck ${STALL_RESCUE_MS} ms: ${saved.title} goes on from this phone at ${from / 1000}s")
                 rescueMode = true
-                LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true)
-                if (from > 0) LocalPlayer.seekTo(from)
+                if (picked != null) {
+                    LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true)
+                } else LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true,
+                    handoverFromMs = from)
             }
         }
     }
@@ -509,6 +514,20 @@ object SongPlayer {
         if (p.stalled.value) return true
         val movedAt = p.soundMovedAt
         return isBuffering && (movedAt == 0L || System.currentTimeMillis() - movedAt > 1_500)
+    }
+
+    /** Spotify still playing, the song saved: it goes on from the phone with no gap. */
+    fun seamlessHandover(why: String): Boolean {
+        if (!MyspotiRuntime.isStarted || LocalPlayer.active.value || !userWantsPlaying || !playing || adState.value || _activeDevice.value != null) return false
+        val id = trackIdOf(_nowPlaying.value.uri).ifBlank { return false }
+        val saved = savedLocal(id) ?: return false
+        val ctx = currentContextUri
+        app.myspoti.host.android.Logbook.log("$why: ${saved.title} goes on from this phone, no gap")
+        currentTrackId = id
+        rescueMode = true
+        LocalPlayer.play(listOf(saved), 0, context = knownContextName(ctx).ifBlank { "Offline" }, contextUri = ctx, fallback = false, rescue = true,
+            handoverFromMs = enginePosition() + 300)
+        return true
     }
 
     private fun savedLocal(id: String) =
@@ -1976,6 +1995,11 @@ object SongPlayer {
 
     fun getCurrentPosition(): Long {
         if (LocalPlayer.active.value) return LocalPlayer.position()
+        return enginePosition()
+    }
+
+    /** Spotify's position now (whatever the phone's player does). */
+    fun enginePosition(): Long {
         val base = positionMs
         if (!playing || isBuffering) return base
         val now = base + (SystemClock.elapsedRealtime() - positionAt)
@@ -2007,6 +2031,8 @@ object SongPlayer {
      */
     private fun engineWhileLocal(s: PlayerState): Boolean {
         if (s.isPaused) return true
+        // A hand-over loading: Spotify is meant to play until the switch.
+        if (LocalPlayer.inHandover) return true
         // The page's last states from before the pause reached it.
         if (SystemClock.elapsedRealtime() - localStartedAt < LOCAL_GRACE_MS) return true
         if (s.item?.uri == engineUriBeforeLocal && !engineRepaused) {
@@ -2023,6 +2049,8 @@ object SongPlayer {
     /** The local player's track / state, shown like any other (player, mini player, notification). */
     fun onLocalState(t: com.music.spotui.data.local.LocalTrack, isPlaying: Boolean, pos: Long, dur: Long) {
         main.post {
+            // A hand-over loading: what shows (and Spotify's position) stays Spotify's until the switch.
+            if (LocalPlayer.inHandover) return@post
             if (!LocalPlayer.fallbackMode && !LocalPlayer.rescuing) currentTrackId = ""
             playing = isPlaying; positionMs = pos; positionAt = SystemClock.elapsedRealtime(); durationMs = dur
             bufferingState.value = false

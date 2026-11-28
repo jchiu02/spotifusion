@@ -54,6 +54,7 @@ object LocalPlayer {
                         current()?.let { SongPlayer.onLocalNext(it) }
                 }
                 override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_READY && handover) { finishHandover(); return }
                     if (playbackState == Player.STATE_ENDED && rescue) { SongPlayer.afterRescue(1); return }
                     if (playbackState == Player.STATE_ENDED && fallbackMode && !p.hasNextMediaItem() && p.repeatMode == Player.REPEAT_MODE_OFF) {
                         SongPlayer.advanceFallbackQueue(1)
@@ -64,9 +65,12 @@ object LocalPlayer {
             AudioFx.attachSession(p.audioSessionId)
         }
 
-    fun play(list: List<LocalTrack>, index: Int, shuffle: Boolean = false, context: String? = null, contextUri: String = "", fallback: Boolean = false, rescue: Boolean = false) {
+    fun play(list: List<LocalTrack>, index: Int, shuffle: Boolean = false, context: String? = null, contextUri: String = "", fallback: Boolean = false, rescue: Boolean = false, handoverFromMs: Long? = null) {
         if (list.isEmpty()) return
-        SongPlayer.pauseEngineForLocal()
+        // A hand-over from Spotify: Spotify keeps playing until this file is loaded, then the
+        // switch happens at Spotify's position at that instant (no gap to hear).
+        handover = handoverFromMs != null
+        if (!handover) SongPlayer.pauseEngineForLocal()
         tracks.clear(); tracks.addAll(list); unshuffled = null
         contextName = context ?: Graph.app.getString(app.myspoti.engine.R.string.local_files_title)
         this.contextUri = contextUri
@@ -75,10 +79,26 @@ object LocalPlayer {
         active.value = true
         val p = player()
         p.shuffleModeEnabled = false
-        p.setMediaItems(list.map(::item), index.coerceIn(0, list.lastIndex), 0L)
+        p.setMediaItems(list.map(::item), index.coerceIn(0, list.lastIndex), handoverFromMs ?: 0L)
         p.prepare()
         if (shuffle) setShuffle(true)
+        if (handover) {
+            p.playWhenReady = false
+            // Not loaded within 2 s: switched anyway.
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ finishHandover() }, 2_000)
+        } else p.play()
+    }
+
+    @Volatile private var handover = false
+    /** Loading for a hand-over: Spotify still the one heard. */
+    val inHandover: Boolean get() = handover
+    private fun finishHandover() {
+        if (!handover || !active.value) return
+        handover = false
+        val p = exo ?: return
+        p.seekTo(SongPlayer.enginePosition() + 60)
         p.play()
+        SongPlayer.pauseEngineForLocal()
     }
 
     /** Back to Spotify: stop and forget the local queue. */
@@ -87,6 +107,7 @@ object LocalPlayer {
         active.value = false
         fallbackMode = false
         rescue = false
+        handover = false
         exo?.let { it.stop(); it.clearMediaItems() }
         tracks.clear(); unshuffled = null
         SongPlayer.restoreEngineQueue()
